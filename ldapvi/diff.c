@@ -210,26 +210,7 @@ frob_ava(tentry *entry, int mode, char *ad, char *data, int n)
 	return 0;
 }
 
-#if defined(LIBLDAP21)
-#warning compiling for libldap <= 2.1, running with >= 2.2 will result in segfault
 #define safe_str2dn ldap_str2dn
-#elif defined(LIBLDAP22)
-/*
- * the following is exactly equivalent to ldap_str2dn in libldap >= 2.2,
- * but will fail linking on 2.1.  This way we avoid calling the old 2.1
- * version of ldap_str2dn (leading to a segfault when accessing the result).
- */
-static void
-safe_str2dn(char *str, LDAPDN *out, int flags)
-{
-        struct berval bv;
-        bv.bv_val = str;
-        bv.bv_len = strlen(str);
-        ldap_bv2dn(&bv, out, flags);
-}
-#else
-#error No SSL library available (need OpenSSL or GnuTLS)
-#endif
 
 /*
  * Call frob_ava for every ava in DN's (first) RDN.
