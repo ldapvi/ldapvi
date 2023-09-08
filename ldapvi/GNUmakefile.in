@@ -4,6 +4,7 @@ LDFLAGS:=@LDFLAGS@ @LIBS@
 INSTALL:=@INSTALL@
 prefix:=@prefix@
 exec_prefix:=@exec_prefix@
+datarootdir:=@datarootdir@
 
 all: ldapvi
 
@@ -42,7 +43,6 @@ install: ldapvi
 	mkdir -p $(DESTDIR)@bindir@ $(DESTDIR)@mandir@/man1/ $(DESTDIR)@prefix@/share/doc/ldapvi
 	@INSTALL_PROGRAM@ ldapvi $(DESTDIR)@bindir@
 	@INSTALL_DATA@ ldapvi.1 $(DESTDIR)@mandir@/man1/
-	@INSTALL_DATA@ manual/manual.css manual/manual.xml manual/bg.png manual/html.xsl $(DESTDIR)@prefix@/share/doc/ldapvi
 
 distclean:
 	rm -rf configure GNUmakefile config.h config.log autom4te.cache config.status
