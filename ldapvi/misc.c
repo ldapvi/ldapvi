@@ -449,7 +449,7 @@ dialog_rebuild(char *up, char *clreos,
 		putp(up);
 }
 
-static Keymap
+static void
 set_meta_keymap(Keymap keymap, Keymap meta_keymap)
 {
 	if (!meta_keymap)

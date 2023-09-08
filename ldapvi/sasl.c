@@ -120,7 +120,7 @@ process_default(sasl_interact_t *interact, tsasl_defaults *defaults)
 	}
 }
 
-static int
+static void
 process_result(int id, char *result, tsasl_defaults *defaults)
 {
 	switch (id) {
