@@ -606,11 +606,11 @@ rebind_sasl(LDAP *ld, bind_options *bind_options, char *dir, int verbose)
 		ld, bind_options->user, bind_options->sasl_mech, NULL,
 		NULL, sasl_mode, ldapvi_sasl_interact, defaults);
 
-	sasl_defaults_free(defaults);
 	if (defaults->fd != -1) {
 		finish_sasl_redirection(defaults);
 		free(defaults->pathname);
 	}
+	sasl_defaults_free(defaults);
 
 	if (rc != LDAP_SUCCESS) {
 		ldap_perror(ld, "ldap_sasl_interactive_bind_s");
