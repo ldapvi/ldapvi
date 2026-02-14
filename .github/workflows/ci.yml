@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install C build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf pkg-config \
+            libldap-dev libglib2.0-dev libpopt-dev \
+            libreadline-dev libncurses-dev libssl-dev \
+            libsasl2-dev libcrypt-dev
+
+      - name: Build ldapvi
+        working-directory: ldapvi
+        run: |
+          ./autogen.sh
+          ./configure
+          make
+          make test-ldapvi
+
+      - name: Unit tests
+        working-directory: ldapvi
+        run: make test
+
+  integration-test:
+    needs: build
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        ldap-server: [slapd, 389ds]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install C build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf pkg-config \
+            libldap-dev libglib2.0-dev libpopt-dev \
+            libreadline-dev libncurses-dev libssl-dev \
+            libsasl2-dev libcrypt-dev
+
+      - name: Build ldapvi
+        working-directory: ldapvi
+        run: |
+          ./autogen.sh
+          ./configure
+          make
+          make test-ldapvi
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build ${{ matrix.ldap-server }} Docker image
+        run: |
+          docker build \
+            -t ldapvi-test-${{ matrix.ldap-server }} \
+            -f integration-test/Dockerfile.${{ matrix.ldap-server }} \
+            integration-test/
+
+      - name: Integration tests (${{ matrix.ldap-server }})
+        working-directory: integration-test
+        env:
+          LDAPVI_TEST_IMAGE: ldapvi-test-${{ matrix.ldap-server }}
+        run: cargo test
