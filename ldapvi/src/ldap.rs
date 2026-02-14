@@ -99,13 +99,16 @@ pub fn search_and_print(
     let attr_refs: Vec<&str> = cmdline.attrs.iter().map(|s| s.as_str()).collect();
 
     for base in &cmdline.basedns {
-        let (entries, _result) = ldap
+        let result = ldap
             .search(base, cmdline.scope, &cmdline.filter, &attr_refs)
-            .map_err(|e| format!("search: {}", e))?
-            .success()
             .map_err(|e| format!("search: {}", e))?;
 
-        for raw_entry in entries {
+        if result.1.rc != 0 {
+            eprintln!("Search failed: {}", result.1);
+            continue;
+        }
+
+        for raw_entry in result.0 {
             let se = SearchEntry::construct(raw_entry);
             let entry = search_entry_to_entry(se);
 
@@ -144,13 +147,16 @@ pub fn search_to_file<W: Write + Seek>(
 
     let mut entry_num = 0usize;
     for base in &cmdline.basedns {
-        let (entries, _result) = ldap
+        let result = ldap
             .search(base, cmdline.scope, &cmdline.filter, &attr_refs)
-            .map_err(|e| format!("search: {}", e))?
-            .success()
             .map_err(|e| format!("search: {}", e))?;
 
-        for raw_entry in entries {
+        if result.1.rc != 0 {
+            eprintln!("Search failed: {}", result.1);
+            continue;
+        }
+
+        for raw_entry in result.0 {
             let pos = out.stream_position().map_err(|e| format!("tell: {}", e))?;
             offsets.push(pos as i64);
 
