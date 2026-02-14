@@ -84,7 +84,7 @@ static guint
 strcasehash(gconstpointer v)
 {
 	const signed char *p = v;
-	guint32 h = *p;
+	guint32 h = tolower(*p);
 
 	if (h)
 		for (p += 1; *p != '\0'; p++)

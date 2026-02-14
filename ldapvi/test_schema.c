@@ -18,7 +18,7 @@ static guint
 test_strcasehash(gconstpointer v)
 {
 	const signed char *p = v;
-	guint32 h = *p;
+	guint32 h = tolower(*p);
 	if (h)
 		for (p += 1; *p != '\0'; p++)
 			h = (h << 5) - h + tolower(*p);
@@ -405,6 +405,21 @@ static int test_entroid_remove_ad_not_found(void)
 
 
 /*
+ * Group 8: strcasehash case insensitivity
+ */
+static int test_strcasehash_case_insensitive(void)
+{
+	/* The first character must be lowercased too. */
+	ASSERT_INT_EQ(test_strcasehash("cn"), test_strcasehash("CN"));
+	ASSERT_INT_EQ(test_strcasehash("cn"), test_strcasehash("Cn"));
+	ASSERT_INT_EQ(test_strcasehash("objectClass"),
+		      test_strcasehash("OBJECTCLASS"));
+	ASSERT_INT_EQ(test_strcasehash("a"), test_strcasehash("A"));
+	return 1;
+}
+
+
+/*
  * run_schema_tests
  */
 void run_schema_tests(void)
@@ -444,4 +459,7 @@ void run_schema_tests(void)
 	TEST(entroid_remove_ad_from_must);
 	TEST(entroid_remove_ad_with_option);
 	TEST(entroid_remove_ad_not_found);
+
+	printf("\nGroup 8: strcasehash\n");
+	TEST(strcasehash_case_insensitive);
 }
