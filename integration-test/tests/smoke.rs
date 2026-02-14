@@ -163,6 +163,7 @@ fn ensure_slapd() {
 
         // Wait for slapd to be ready (up to 10 seconds).
         let ldapvi = ldapvi_binary();
+        let mut last_output = None;
         for _ in 0..50 {
             let result = Command::new(&ldapvi)
                 .args([
@@ -175,12 +176,17 @@ fn ensure_slapd() {
                     "(objectClass=*)",
                 ])
                 .output();
-            if let Ok(output) = result {
-                if output.status.success() {
-                    return;
-                }
+            match result {
+                Ok(output) if output.status.success() => return,
+                Ok(output) => { last_output = Some(output); }
+                Err(e) => { eprintln!("readiness probe exec error: {e}"); }
             }
             std::thread::sleep(std::time::Duration::from_millis(200));
+        }
+        if let Some(output) = last_output {
+            eprintln!("last probe stdout:\n{}", String::from_utf8_lossy(&output.stdout));
+            eprintln!("last probe stderr:\n{}", String::from_utf8_lossy(&output.stderr));
+            eprintln!("last probe exit status: {}", output.status);
         }
         panic!("slapd did not become ready within 10 seconds");
     });
