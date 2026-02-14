@@ -74,6 +74,7 @@ jobs:
         working-directory: integration-test
         env:
           LDAPVI_TEST_IMAGE: ldapvi-test-${{ matrix.ldap-server }}
+          TERM: dumb
         run: cargo test
 
       - name: Docker logs (on failure)
