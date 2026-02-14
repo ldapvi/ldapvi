@@ -14,63 +14,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Determine version
-        id: version
-        run: echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: Set version from tag
-        run: |
-          version="${{ steps.version.outputs.version }}"
-          printf '#define VERSION "%s"\n' "$version" > ldapvi/version.h
+      - name: Build (release)
+        run: cargo build --release
 
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            autoconf pkg-config help2man \
-            libldap-dev libglib2.0-dev libpopt-dev \
-            libreadline-dev libncurses-dev libssl-dev \
-            libsasl2-dev libcrypt-dev
-
-      - name: Build and generate release artifacts
-        working-directory: ldapvi
-        run: |
-          ./autogen.sh
-          ./configure
-          make
-          make dist
-
-      - name: Run unit tests
-        working-directory: ldapvi
-        run: make test
-
-      - name: Create tarball
-        run: |
-          version="${{ steps.version.outputs.version }}"
-          dirname="ldapvi-${version}"
-          mkdir "$dirname"
-          # Source files
-          cp ldapvi/*.c ldapvi/*.h "$dirname/"
-          # Build system
-          cp ldapvi/configure ldapvi/configure.in "$dirname/"
-          cp ldapvi/config.h.in "$dirname/"
-          cp ldapvi/GNUmakefile.in "$dirname/"
-          cp ldapvi/autogen.sh "$dirname/"
-          cp ldapvi/install-sh ldapvi/mkinstalldirs "$dirname/"
-          # Generated manpage
-          cp ldapvi/ldapvi.1 ldapvi/ldapvi.1.in "$dirname/"
-          # Documentation and metadata
-          cp ldapvi/COPYING ldapvi/INSTALL ldapvi/NEWS "$dirname/"
-          cp -r ldapvi/manual "$dirname/"
-          cp -r ldapvi/test "$dirname/"
-          tar czf "${dirname}.tar.gz" "$dirname"
+      - name: Unit tests
+        run: cargo test
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          version="${{ steps.version.outputs.version }}"
           gh release create "$GITHUB_REF_NAME" \
-            --title "ldapvi ${version}" \
+            --title "ldapvi ${GITHUB_REF_NAME}" \
             --generate-notes \
-            "ldapvi-${version}.tar.gz"
+            target/release/ldapvi

@@ -59,11 +59,10 @@ impl TestSession {
             None,
             SockFlag::empty(),
         )
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        .map_err(std::io::Error::other)?;
 
         // Create PTY for child's stdout.
-        let pty = openpty(None, None)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        let pty = openpty(None, None).map_err(std::io::Error::other)?;
         let pty_master_fd = pty.master.into_raw_fd();
         let pty_slave_fd = pty.slave.into_raw_fd();
 

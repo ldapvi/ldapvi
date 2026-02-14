@@ -827,7 +827,7 @@ fn consume_next_value(
 }
 
 /// Expand `!#:+` substitution markers in a value string.
-fn expand_next_arg(s: &str, stack: &mut Vec<ParseFrame>) -> String {
+fn expand_next_arg(s: &str, stack: &mut [ParseFrame]) -> String {
     if !s.contains("!#:+") {
         return s.to_string();
     }
@@ -860,7 +860,7 @@ fn expand_next_arg(s: &str, stack: &mut Vec<ParseFrame>) -> String {
 }
 
 /// Find and consume the next non-option positional arg from the option stack.
-fn find_next_arg_from_stack(stack: &mut Vec<ParseFrame>) -> Option<String> {
+fn find_next_arg_from_stack(stack: &mut [ParseFrame]) -> Option<String> {
     for frame in stack.iter_mut().rev() {
         for i in frame.next..frame.args.len() {
             if frame.consumed.contains(&i) {
@@ -1765,7 +1765,7 @@ impl Context {
         // Skip whitespace and get entry type
         let entry_type = loop {
             match parts.next() {
-                Some(s) if s.is_empty() => continue,
+                Some("") => continue,
                 Some(s) => break s,
                 None => return,
             }
@@ -1774,7 +1774,7 @@ impl Context {
         // Get the rest of the line after entry_type
         let _rest = loop {
             match parts.next() {
-                Some(s) if s.is_empty() => continue,
+                Some("") => continue,
                 Some(s) => break s,
                 None => return,
             }
@@ -1897,17 +1897,16 @@ impl Context {
         // Build a set of indices that belong to sections (include tables)
         let mut in_section = vec![false; self.options.len()];
         for &(start, end, _) in &self.table_sections {
-            for i in start..end {
-                in_section[i] = true;
+            for flag in &mut in_section[start..end] {
+                *flag = true;
             }
         }
 
         // First: print main table options (those not in any section)
-        for i in 0..self.options.len() {
-            if in_section[i] {
+        for (opt, &in_sec) in self.options.iter().zip(in_section.iter()) {
+            if in_sec {
                 continue;
             }
-            let opt = &self.options[i];
             if (opt.long_name.is_empty() && opt.short_name.is_none()) || opt.flags_doc_hidden {
                 continue;
             }

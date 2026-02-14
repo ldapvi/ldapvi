@@ -1,11 +1,5 @@
-ldapvi/*.o
-ldapvi/*~
-ldapvi/GNUmakefile
-ldapvi/configure
-ldapvi/config.h
-ldapvi/config.log
-ldapvi/config.status
-ldapvi/ldapvi
-ldapvi/test1
-ldapvi/test2
+*~
+ldapvi/target/
 integration-test/target/
+popt/target/
+target/

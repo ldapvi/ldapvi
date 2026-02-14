@@ -1,9 +1,12 @@
-# ldapvi
+# ldapvi 2.0
 
-An interactive LDAP client for Unix terminals.  Using it, you can update
-LDAP entries with a text editor.  Think of it as `vipw(1)` for LDAP.
+`ldapvi` is an interactive LDAP client for Unix terminals. Using it, you can update LDAP entries with a text editor. Think of it as `vipw`(1) for LDAP.
 
-![ldapvi demo](web/vhs.gif)
+## Experimental branch warning
+
+*This is the experimental version 2.0 branch, a Rust translation of the program.*  It implements most features, but is not recommended for production uses yet.
+
+For the stable 1.x release of the original C codebase, see previous commits or one of the release tags and tarballs.
 
 ## Getting Started
 
@@ -67,12 +70,14 @@ Shortcut aliases: `--ldapsearch` (`--quiet --out`), `--ldapmodify`
 | `-w`, `--password` SECRET | Password (simple or SASL) |
 | `-d`, `--discover` | Auto-detect naming contexts from ROOT DSE |
 | `-Z`, `--starttls` | Require StartTLS |
-| `--tls` never\|allow\|try\|strict | TLS strictness (default: strict) |
+| `--tls` never\|strict | TLS strictness (default: strict) |
 | `--bind` simple\|sasl | Authentication method |
 | `-m`, `--may` | Show optional attributes as comments |
 | `--encoding` ASCII\|UTF-8\|binary | Allowed encoding (default: UTF-8) |
 | `-c`, `--continue` | Ignore errors and continue processing |
 | `-v`, `--verbose` | Note every update |
+
+*Rust warning*: This documentation is for 1.x with OpenLDAP.   SASL support is still missing on the 2.x branch with ldap3.
 
 SASL options: `-I` (interactive), `-Q` (quiet), `-O` (secprops), `-R`
 (realm), `-U` (authcid), `-X` (authzid), `-Y` (mechanism).
@@ -86,40 +91,17 @@ See the [manual](http://www.lichteblau.com/ldapvi/manual#syntax) for details.
 
 ## Building from Source
 
-### Dependencies (Debian/Ubuntu)
-
 ```
-apt-get build-dep ldapvi
-# or in detail:
-sudo apt-get install autoconf pkg-config \
-  libldap-dev libglib2.0-dev libpopt-dev \
-  libreadline-dev libncurses-dev libssl-dev \
-  libsasl2-dev libcrypt-dev
+cargo build
+cargo test
 ```
 
-### Build
-
-```
-cd ldapvi
-./autogen.sh # if building from git
-./configure
-make
-make install
-```
-
-### Tests
-
-```
-make test          # unit tests
-```
-
-Integration tests (require Docker and Rust) run against OpenLDAP and 389
+Integration tests (require Docker) run against OpenLDAP and 389
 Directory Server:
 
 ```
 docker build -t ldapvi-test-slapd -f integration-test/Dockerfile.slapd integration-test/
-cd integration-test
-LDAPVI_TEST_IMAGE=ldapvi-test-slapd cargo test
+LDAPVI_TEST_IMAGE=ldapvi-test-slapd cargo test -p test-driver
 ```
 
 The docker containers can also be useful for interactive testing, with the following parameters:

@@ -14,17 +14,17 @@ fn container() -> String {
     format!("ldapvi-inttest-{}", image().replace("ldapvi-test-", ""))
 }
 
-fn ldapvi_dir() -> String {
+fn target_dir() -> String {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    format!("{manifest_dir}/../ldapvi")
+    format!("{manifest_dir}/../target/debug")
 }
 
 fn test_ldapvi_binary() -> String {
-    format!("{}/test-ldapvi", ldapvi_dir())
+    format!("{}/test-ldapvi", target_dir())
 }
 
 fn ldapvi_binary() -> String {
-    format!("{}/ldapvi", ldapvi_dir())
+    format!("{}/ldapvi", target_dir())
 }
 
 fn ldap_url() -> String {
@@ -36,12 +36,16 @@ fn ldapsearch(filter: &str) -> String {
     let output = Command::new(ldapvi_binary())
         .args([
             "--ldapsearch",
-            "--tls", "never",
-            "--bind", "simple",
-            "-h", &ldap_url(),
-            "-D", "cn=admin,dc=example,dc=com",
-            "-w", "secret",
-            "-b", "dc=example,dc=com",
+            "--bind",
+            "simple",
+            "-h",
+            &ldap_url(),
+            "-D",
+            "cn=admin,dc=example,dc=com",
+            "-w",
+            "secret",
+            "-b",
+            "dc=example,dc=com",
             filter,
         ])
         .output()
@@ -57,12 +61,16 @@ fn ldapsearch_test_user() -> String {
 /// Common args for authenticated bind against the test LDAP.
 fn bind_args() -> Vec<String> {
     vec![
-        "--tls".into(), "never".into(),
-        "--bind".into(), "simple".into(),
-        "-h".into(), ldap_url(),
-        "-D".into(), "cn=admin,dc=example,dc=com".into(),
-        "-w".into(), "secret".into(),
-        "-b".into(), "dc=example,dc=com".into(),
+        "--bind".into(),
+        "simple".into(),
+        "-h".into(),
+        ldap_url(),
+        "-D".into(),
+        "cn=admin,dc=example,dc=com".into(),
+        "-w".into(),
+        "secret".into(),
+        "-b".into(),
+        "dc=example,dc=com".into(),
     ]
 }
 
@@ -71,12 +79,7 @@ fn spawn_session(filter: &str) -> TestSession {
     let mut args: Vec<String> = bind_args();
     args.push(filter.into());
     let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
-    TestSession::spawn(
-        &test_ldapvi_binary(),
-        &arg_refs,
-        &[],
-    )
-    .expect("failed to spawn test-ldapvi")
+    TestSession::spawn(&test_ldapvi_binary(), &arg_refs, &[]).expect("failed to spawn test-ldapvi")
 }
 
 /// Spawn test-ldapvi with a given search filter and working directory.
@@ -84,13 +87,8 @@ fn spawn_session_in(filter: &str, cwd: &str) -> TestSession {
     let mut args: Vec<String> = bind_args();
     args.push(filter.into());
     let arg_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
-    TestSession::spawn_in(
-        &test_ldapvi_binary(),
-        &arg_refs,
-        &[],
-        Some(cwd),
-    )
-    .expect("failed to spawn test-ldapvi")
+    TestSession::spawn_in(&test_ldapvi_binary(), &arg_refs, &[], Some(cwd))
+        .expect("failed to spawn test-ldapvi")
 }
 
 fn spawn_test_session() -> TestSession {
@@ -129,6 +127,7 @@ fn remove_entry(cn: &str) {
     session.wait_exit(0);
 }
 
+static BUILD_INIT: Once = Once::new();
 static DOCKER_INIT: Once = Once::new();
 /// Serialize tests — they share an LDAP database and concurrent
 /// connections to the tiny Alpine slapd cause hangs.
@@ -139,7 +138,22 @@ fn serial() -> std::sync::MutexGuard<'static, ()> {
     TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner())
 }
 
+/// Build the ldapvi binaries (ldapvi + test-ldapvi) if not already done.
+fn ensure_binaries() {
+    BUILD_INIT.call_once(|| {
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let workspace_root = format!("{manifest_dir}/..");
+        let status = Command::new("cargo")
+            .args(["build", "-p", "ldapvi"])
+            .current_dir(&workspace_root)
+            .status()
+            .expect("failed to run cargo build");
+        assert!(status.success(), "cargo build -p ldapvi failed");
+    });
+}
+
 fn ensure_slapd() {
+    ensure_binaries();
     DOCKER_INIT.call_once(|| {
         let image = image();
         let container = container();
@@ -152,9 +166,12 @@ fn ensure_slapd() {
         // Start container.
         let status = Command::new("docker")
             .args([
-                "run", "-d",
-                "--name", &container,
-                "-p", &format!("{PORT}:389"),
+                "run",
+                "-d",
+                "--name",
+                &container,
+                "-p",
+                &format!("{PORT}:389"),
                 &image,
             ])
             .status()
@@ -163,30 +180,27 @@ fn ensure_slapd() {
 
         // Wait for slapd to be ready (up to 10 seconds).
         let ldapvi = ldapvi_binary();
-        let mut last_output = None;
         for _ in 0..50 {
             let result = Command::new(&ldapvi)
                 .args([
                     "--ldapsearch",
-                    "--tls", "never",
-                    "--bind", "simple",
-                    "-h", &ldap_url(),
-                    "-b", "",
-                    "-s", "base",
+                    "--bind",
+                    "simple",
+                    "-h",
+                    &ldap_url(),
+                    "-b",
+                    "",
+                    "-s",
+                    "base",
                     "(objectClass=*)",
                 ])
                 .output();
-            match result {
-                Ok(output) if output.status.success() => return,
-                Ok(output) => { last_output = Some(output); }
-                Err(e) => { eprintln!("readiness probe exec error: {e}"); }
+            if let Ok(output) = result {
+                if output.status.success() {
+                    return;
+                }
             }
             std::thread::sleep(std::time::Duration::from_millis(200));
-        }
-        if let Some(output) = last_output {
-            eprintln!("last probe stdout:\n{}", String::from_utf8_lossy(&output.stdout));
-            eprintln!("last probe stderr:\n{}", String::from_utf8_lossy(&output.stderr));
-            eprintln!("last probe exit status: {}", output.status);
         }
         panic!("slapd did not become ready within 10 seconds");
     });
@@ -206,13 +220,15 @@ fn smoke_edit_discard() {
             .append(true)
             .open(path)
             .expect("failed to open editor file");
-        writeln!(f, "description: added by discard test")
-            .expect("failed to write to editor file");
+        writeln!(f, "description: added by discard test").expect("failed to write to editor file");
     });
 
     // After the editor, ldapvi detects changes and presents the Action? prompt.
     let charbag = session.expect_choose();
-    assert!(charbag.contains('Q'), "expected Q in charbag, got '{charbag}'");
+    assert!(
+        charbag.contains('Q'),
+        "expected Q in charbag, got '{charbag}'"
+    );
 
     // Respond Q to discard changes and quit.
     session.respond('Q');
@@ -243,13 +259,15 @@ fn smoke_edit_commit() {
             .append(true)
             .open(path)
             .expect("failed to open editor file");
-        writeln!(f, "description: added by commit test")
-            .expect("failed to write to editor file");
+        writeln!(f, "description: added by commit test").expect("failed to write to editor file");
     });
 
     // Action? prompt — respond y to commit.
     let charbag = session.expect_choose();
-    assert!(charbag.contains('y'), "expected y in charbag, got '{charbag}'");
+    assert!(
+        charbag.contains('y'),
+        "expected y in charbag, got '{charbag}'"
+    );
     session.respond('y');
 
     // On success, commit() calls exit(0) directly.
@@ -284,27 +302,30 @@ fn smoke_reedit_then_commit() {
             .append(true)
             .open(path)
             .expect("failed to open editor file");
-        writeln!(f, "telephoneNumber: 555-first-edit")
-            .expect("failed to write to editor file");
+        writeln!(f, "telephoneNumber: 555-first-edit").expect("failed to write to editor file");
     });
 
     // Action? prompt — respond 'e' to re-edit.
     let charbag = session.expect_choose();
-    assert!(charbag.contains('e'), "expected e in charbag, got '{charbag}'");
+    assert!(
+        charbag.contains('e'),
+        "expected e in charbag, got '{charbag}'"
+    );
     session.respond('e');
 
     // Second edit: replace the first phone number with a different one.
     session.expect_edit(|path| {
-        let content = fs::read_to_string(path)
-            .expect("failed to read editor file");
+        let content = fs::read_to_string(path).expect("failed to read editor file");
         let updated = content.replace("555-first-edit", "555-second-edit");
-        fs::write(path, updated)
-            .expect("failed to write editor file");
+        fs::write(path, updated).expect("failed to write editor file");
     });
 
     // Action? prompt — now commit.
     let charbag = session.expect_choose();
-    assert!(charbag.contains('y'), "expected y in charbag, got '{charbag}'");
+    assert!(
+        charbag.contains('y'),
+        "expected y in charbag, got '{charbag}'"
+    );
     session.respond('y');
 
     let output = session.wait_exit(0);
@@ -370,7 +391,10 @@ fn syntax_error_quit() {
 
     // analyze_changes hits a parse error → "What now?" prompt.
     let charbag = session.expect_choose();
-    assert_eq!(charbag, "eQ?", "expected 'What now?' charbag, got '{charbag}'");
+    assert_eq!(
+        charbag, "eQ?",
+        "expected 'What now?' charbag, got '{charbag}'"
+    );
 
     session.respond('Q');
     session.wait_exit(0);
@@ -452,7 +476,8 @@ fn save_ldif_and_quit() {
         })
         .collect();
     assert_eq!(
-        ldif_files.len(), 1,
+        ldif_files.len(),
+        1,
         "expected exactly one LDIF file in tmpdir, found: {:?}",
         ldif_files.iter().map(|e| e.file_name()).collect::<Vec<_>>(),
     );
@@ -496,7 +521,11 @@ fn add_new_entry() {
     session.respond('y');
 
     let output = session.wait_exit(0);
-    assert!(output.stdout.contains("Done."), "stdout:\n{}", output.stdout);
+    assert!(
+        output.stdout.contains("Done."),
+        "stdout:\n{}",
+        output.stdout
+    );
 
     // Verify the new entry exists in LDAP.
     let search_output = ldapsearch("(cn=Added By Test)");
@@ -543,7 +572,11 @@ fn delete_entry() {
     session.respond('y');
 
     let output = session.wait_exit(0);
-    assert!(output.stdout.contains("Done."), "stdout:\n{}", output.stdout);
+    assert!(
+        output.stdout.contains("Done."),
+        "stdout:\n{}",
+        output.stdout
+    );
 
     // Verify the entry is gone.
     let search_output = ldapsearch("(cn=Added By Test)");
@@ -569,7 +602,10 @@ fn forget_deletions() {
 
     // Action? prompt — changes detected (1 delete).
     let charbag = session.expect_choose();
-    assert!(charbag.contains('f'), "expected f in charbag, got '{charbag}'");
+    assert!(
+        charbag.contains('f'),
+        "expected f in charbag, got '{charbag}'"
+    );
 
     // Respond f to forget deletions.
     session.respond('f');
@@ -616,16 +652,26 @@ fn skip_entry() {
 
     // Action? — shows 2 modifications. Press s to skip the first entry.
     let charbag = session.expect_choose();
-    assert!(charbag.contains('s'), "expected s in charbag, got '{charbag}'");
+    assert!(
+        charbag.contains('s'),
+        "expected s in charbag, got '{charbag}'"
+    );
     session.respond('s');
 
     // After skip, only 1 modification remains. Action? again.
     let charbag = session.expect_choose();
-    assert!(charbag.contains('y'), "expected y in charbag, got '{charbag}'");
+    assert!(
+        charbag.contains('y'),
+        "expected y in charbag, got '{charbag}'"
+    );
     session.respond('y');
 
     let output = session.wait_exit(0);
-    assert!(output.stdout.contains("Done."), "stdout:\n{}", output.stdout);
+    assert!(
+        output.stdout.contains("Done."),
+        "stdout:\n{}",
+        output.stdout
+    );
 
     // Exactly one of the two entries should have the description.
     let a = ldapsearch("(cn=Skip Alpha)");
@@ -656,16 +702,17 @@ fn modify_multiple_entries() {
     let mut session = spawn_session("(|(cn=Multi Alpha)(cn=Multi Beta))");
 
     // Edit: add a unique description to each entry.
+    // Insert after the DN line to be independent of attribute order.
     session.expect_edit(|path| {
         let content = fs::read_to_string(path).unwrap();
         let updated = content
             .replace(
-                "cn: Multi Alpha\nsn: TestEntry",
-                "cn: Multi Alpha\nsn: TestEntry\ndescription: multi-alpha",
+                "cn=Multi Alpha,dc=example,dc=com\n",
+                "cn=Multi Alpha,dc=example,dc=com\ndescription: multi-alpha\n",
             )
             .replace(
-                "cn: Multi Beta\nsn: TestEntry",
-                "cn: Multi Beta\nsn: TestEntry\ndescription: multi-beta",
+                "cn=Multi Beta,dc=example,dc=com\n",
+                "cn=Multi Beta,dc=example,dc=com\ndescription: multi-beta\n",
             );
         fs::write(path, updated).unwrap();
     });
@@ -675,7 +722,11 @@ fn modify_multiple_entries() {
     session.respond('y');
 
     let output = session.wait_exit(0);
-    assert!(output.stdout.contains("Done."), "stdout:\n{}", output.stdout);
+    assert!(
+        output.stdout.contains("Done."),
+        "stdout:\n{}",
+        output.stdout
+    );
 
     // Both entries should have their descriptions.
     let a = ldapsearch("(cn=Multi Alpha)");
@@ -720,7 +771,11 @@ fn rename_entry() {
     session.respond('y');
 
     let output = session.wait_exit(0);
-    assert!(output.stdout.contains("Done."), "stdout:\n{}", output.stdout);
+    assert!(
+        output.stdout.contains("Done."),
+        "stdout:\n{}",
+        output.stdout
+    );
 
     // Old entry should be gone, new entry should exist.
     let old = ldapsearch("(cn=Rename Source)");
@@ -755,7 +810,10 @@ fn view_ldif() {
 
     // Action? → press v to view LDIF.
     let charbag = session.expect_choose();
-    assert!(charbag.contains('v'), "expected v in charbag, got '{charbag}'");
+    assert!(
+        charbag.contains('v'),
+        "expected v in charbag, got '{charbag}'"
+    );
     session.respond('v');
 
     // test-ldapvi calls view_ldif which writes a file then calls view().
@@ -796,7 +854,10 @@ fn view_vdif() {
 
     // Action? → press V to view vdif.
     let charbag = session.expect_choose();
-    assert!(charbag.contains('V'), "expected V in charbag, got '{charbag}'");
+    assert!(
+        charbag.contains('V'),
+        "expected V in charbag, got '{charbag}'"
+    );
     session.respond('V');
 
     // view_vdif writes a file and calls view().
@@ -881,11 +942,18 @@ fn continuous_commit() {
 
     // Action? → Y (continuous mode, but on success behaves like y).
     let charbag = session.expect_choose();
-    assert!(charbag.contains('Y'), "expected Y in charbag, got '{charbag}'");
+    assert!(
+        charbag.contains('Y'),
+        "expected Y in charbag, got '{charbag}'"
+    );
     session.respond('Y');
 
     let output = session.wait_exit(0);
-    assert!(output.stdout.contains("Done."), "stdout:\n{}", output.stdout);
+    assert!(
+        output.stdout.contains("Done."),
+        "stdout:\n{}",
+        output.stdout
+    );
 
     // Verify the change was committed.
     let search_output = ldapsearch_test_user();
@@ -895,122 +963,128 @@ fn continuous_commit() {
     );
 }
 
-// ── Regression: base64 DN without padding ────────────────────
+// ── Profile --base override ──────────────────────────────────
+
+/// Helper: run ldapvi --ldapsearch with a custom HOME directory.
+fn ldapsearch_with_home(home: &str, extra_args: &[&str], filter: &str) -> std::process::Output {
+    let mut cmd = Command::new(ldapvi_binary());
+    cmd.env("HOME", home);
+    cmd.args([
+        "--ldapsearch",
+        "--bind",
+        "simple",
+        "-h",
+        &ldap_url(),
+        "-D",
+        "cn=admin,dc=example,dc=com",
+        "-w",
+        "secret",
+    ]);
+    cmd.args(extra_args);
+    cmd.arg(filter);
+    cmd.output().expect("ldapvi --ldapsearch failed")
+}
 
 #[test]
-fn ldif_import_base64_dn_no_padding() {
+fn profile_base_used_when_no_cli_base() {
     let _lock = serial();
     ensure_slapd();
 
-    // Clean up in case a previous run left the entry.
-    let _ = Command::new(ldapvi_binary())
-        .args([
-            "--ldapdelete",
-            "--tls", "never",
-            "--bind", "simple",
-            "-h", &ldap_url(),
-            "-D", "cn=admin,dc=example,dc=com",
-            "-w", "secret",
-            "ou=abc,dc=example,dc=com",
-        ])
-        .output();
-
-    // Create a ldapvi-format file with a base64-encoded DN whose decoded
-    // length is a multiple of 3 (24 bytes → no padding).
-    // b3U9YWJjLGRjPWV4YW1wbGUsZGM9Y29t = "ou=abc,dc=example,dc=com"
-    //
-    // We use --ldapvi to force parsing through parse.c (the ldapvi-format
-    // parser), which does NOT use g_string_truncate after read_base64.
-    // Without the fix, read_base64() leaves leftover base64 chars after
-    // the decoded bytes, mangling the DN.
     let tmpdir = tempfile::tempdir().expect("failed to create temp dir");
-    let input_path = tmpdir.path().join("test.ldapvi");
+
+    // Write a profile with the correct base.
     fs::write(
-        &input_path,
-        "add:: b3U9YWJjLGRjPWV4YW1wbGUsZGM9Y29t\n\
-         objectClass: organizationalUnit\n\
-         ou: abc\n\
+        tmpdir.path().join(".ldapvirc"),
+        "profile default\n\
+         base: dc=example,dc=com\n\
          \n",
     )
     .unwrap();
 
-    // Import via ldapvi --ldapmodify --ldapvi --add, which parses the
-    // input with the ldapvi-format parser (parse.c) instead of the LDIF
-    // parser (parseldif.c).
-    let output = Command::new(ldapvi_binary())
-        .args([
-            "--ldapmodify", "--ldapvi", "--add",
-            "--tls", "never",
-            "--bind", "simple",
-            "-h", &ldap_url(),
-            "-D", "cn=admin,dc=example,dc=com",
-            "-w", "secret",
-        ])
-        .arg(input_path.to_str().unwrap())
-        .output()
-        .expect("ldapvi --ldapmodify --ldapvi --add failed to execute");
+    // Run without CLI --base → profile base should be used.
+    let output = ldapsearch_with_home(tmpdir.path().to_str().unwrap(), &[], "(cn=Test User)");
 
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let stderr = String::from_utf8_lossy(&output.stderr);
     assert!(
         output.status.success(),
-        "ldapvi --ldapmodify --ldapvi --add failed (exit {:?}):\n\
-         stdout: {stdout}\nstderr: {stderr}",
-        output.status.code(),
+        "ldapsearch should succeed with profile base"
     );
-
-    // Verify the entry was created with the correct DN.
-    let search_output = ldapsearch("(ou=abc)");
+    let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(
-        search_output.contains("ou: abc"),
-        "entry with base64-decoded DN should exist in LDAP:\n{search_output}\n\
-         ldapmodify stdout: {stdout}\nstderr: {stderr}",
+        stdout.contains("cn: Test User"),
+        "profile base should find the test entry:\n{stdout}",
     );
-
-    // Clean up.
-    let _ = Command::new(ldapvi_binary())
-        .args([
-            "--ldapdelete",
-            "--tls", "never",
-            "--bind", "simple",
-            "-h", &ldap_url(),
-            "-D", "cn=admin,dc=example,dc=com",
-            "-w", "secret",
-            "ou=abc,dc=example,dc=com",
-        ])
-        .output();
 }
 
-// ── Regression: --sasl-secprops is actually applied ──────────
-
 #[test]
-fn sasl_secprops_is_applied() {
+fn cli_base_overrides_profile_base() {
     let _lock = serial();
     ensure_slapd();
 
-    // Pass an invalid sasl-secprops value.  Before the fix,
-    // the option was parsed but never passed to ldap_set_option,
-    // so any value was silently ignored.  After the fix, the
-    // invalid value causes ldap_set_option to fail.
-    let output = Command::new(ldapvi_binary())
-        .args([
-            "--sasl-secprops", "bogus",
-            "--tls", "never",
-            "--bind", "simple",
-            "-h", &ldap_url(),
-            "-D", "cn=admin,dc=example,dc=com",
-            "-w", "secret",
-        ])
-        .output()
-        .expect("ldapvi failed to execute");
+    let tmpdir = tempfile::tempdir().expect("failed to create temp dir");
 
+    // Write a profile with a non-existent base.
+    fs::write(
+        tmpdir.path().join(".ldapvirc"),
+        "profile default\n\
+         base: ou=nonexistent,dc=example,dc=com\n\
+         \n",
+    )
+    .unwrap();
+
+    // Without CLI --base, the profile's bad base should cause no results.
+    let output = ldapsearch_with_home(tmpdir.path().to_str().unwrap(), &[], "(cn=Test User)");
+    let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(
-        !output.status.success(),
-        "ldapvi should reject invalid sasl-secprops, but exited successfully",
+        !stdout.contains("cn: Test User"),
+        "profile's non-existent base should return no results:\n{stdout}",
     );
-    let stderr = String::from_utf8_lossy(&output.stderr);
+
+    // With CLI --base, it should override the profile's base.
+    let output = ldapsearch_with_home(
+        tmpdir.path().to_str().unwrap(),
+        &["-b", "dc=example,dc=com"],
+        "(cn=Test User)",
+    );
     assert!(
-        stderr.contains("LDAP_OPT_X_SASL_SECPROPS"),
-        "error should mention LDAP_OPT_X_SASL_SECPROPS:\n{stderr}",
+        output.status.success(),
+        "ldapsearch with CLI --base should succeed"
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("cn: Test User"),
+        "CLI --base should override profile base and find test entry:\n{stdout}",
+    );
+}
+
+#[test]
+fn named_profile_base_override() {
+    let _lock = serial();
+    ensure_slapd();
+
+    let tmpdir = tempfile::tempdir().expect("failed to create temp dir");
+
+    // Write a named profile with a non-existent base.
+    fs::write(
+        tmpdir.path().join(".ldapvirc"),
+        "profile myprofile\n\
+         base: ou=nonexistent,dc=example,dc=com\n\
+         \n",
+    )
+    .unwrap();
+
+    // Use named profile, but override base on CLI.
+    let output = ldapsearch_with_home(
+        tmpdir.path().to_str().unwrap(),
+        &["-p", "myprofile", "-b", "dc=example,dc=com"],
+        "(cn=Test User)",
+    );
+    assert!(
+        output.status.success(),
+        "named profile with CLI --base override should succeed"
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("cn: Test User"),
+        "CLI --base should override named profile base:\n{stdout}",
     );
 }

@@ -11,26 +11,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install C build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            autoconf pkg-config \
-            libldap-dev libglib2.0-dev libpopt-dev \
-            libreadline-dev libncurses-dev libssl-dev \
-            libsasl2-dev libcrypt-dev
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: Build ldapvi
-        working-directory: ldapvi
-        run: |
-          ./autogen.sh
-          ./configure
-          make
-          make test-ldapvi
+      - name: Build
+        run: cargo build
+
+      - name: Clippy
+        run: cargo clippy -- -D warnings
+
+      - name: Format check
+        run: cargo fmt -- --check
 
       - name: Unit tests
-        working-directory: ldapvi
-        run: make test
+        run: cargo test
 
   integration-test:
     needs: build
@@ -43,25 +37,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install C build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            autoconf pkg-config \
-            libldap-dev libglib2.0-dev libpopt-dev \
-            libreadline-dev libncurses-dev libssl-dev \
-            libsasl2-dev libcrypt-dev
-
-      - name: Build ldapvi
-        working-directory: ldapvi
-        run: |
-          ./autogen.sh
-          ./configure
-          make
-          make test-ldapvi
-
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: cargo build
 
       - name: Build ${{ matrix.ldap-server }} Docker image
         run: |
@@ -71,11 +51,10 @@ jobs:
             integration-test/
 
       - name: Integration tests (${{ matrix.ldap-server }})
-        working-directory: integration-test
         env:
           LDAPVI_TEST_IMAGE: ldapvi-test-${{ matrix.ldap-server }}
           TERM: dumb
-        run: cargo test
+        run: cargo test -p test-driver
 
       - name: Docker logs (on failure)
         if: failure()

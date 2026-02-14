@@ -1,0 +1,16 @@
+[workspace]
+members = [
+    "ldapvi",
+    "popt",
+    "integration-test",
+]
+resolver = "2"
+
+[workspace.lints.clippy]
+uninlined_format_args = "allow"
+write_with_newline = "allow"
+manual_strip = "allow"
+collapsible_if = "allow"
+too_many_arguments = "allow"
+redundant_pattern_matching = "allow"
+manual_range_contains = "allow"

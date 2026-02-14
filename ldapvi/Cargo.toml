@@ -1,0 +1,27 @@
+[package]
+name = "ldapvi"
+version = "2.0.0"
+edition = "2021"
+
+[[bin]]
+name = "ldapvi"
+path = "src/main.rs"
+
+[[bin]]
+name = "test-ldapvi"
+path = "src/test_main.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+popt = { path = "../popt" }
+ldap3 = "0.11"
+tokio = { version = "1", features = ["rt", "net", "time", "macros"] }
+rustyline = "15"
+base64 = "0.22"
+sha1 = "0.10"
+md-5 = "0.10"
+nix = { version = "0.29", features = ["term", "socket", "process", "fs"] }
+tempfile = "3"
+thiserror = "2"
