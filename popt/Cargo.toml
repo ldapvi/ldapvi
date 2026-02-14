@@ -1,0 +1,29 @@
+[package]
+name = "popt"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+exec = []
+
+[lib]
+name = "popt"
+path = "src/lib.rs"
+
+# Test runners
+[[bin]]
+name = "test1"
+path = "src/bin/test1.rs"
+required-features = ["exec"]
+
+[[bin]]
+name = "test2"
+path = "src/bin/test2.rs"
+
+[[bin]]
+name = "test3"
+path = "src/bin/test3.rs"
+
+[[bin]]
+name = "tdict"
+path = "src/bin/tdict.rs"
