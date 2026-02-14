@@ -55,7 +55,7 @@ CFLAGS="`$PKG_CONFIG --cflags glib-2.0` $CFLAGS"
 AC_CHECK_LIB([glib-2.0],[main],:,AC_MSG_ERROR([libglib2.0 not found]))
 
 # libcrypto
-AC_ARG_WITH(libcrypto, [  --with-libcrypto=(openssl|gnutls)
+AC_ARG_WITH(libcrypto, [  --with-libcrypto=(openssl|gnutls|none)
                           default is openssl],,with_libcrypto=openssl)
 
 case $with_libcrypto in
@@ -73,11 +73,14 @@ case $with_libcrypto in
 		AC_DEFINE(HAVE_GNUTLS)
 		AC_DEFINE(SHA_DIGEST_LENGTH,20)
 		;;
+	none)
+		;;
 	*)
-		AC_MSG_ERROR([invalid value --with-libcrypto=$with_libcrypto, expected openssl or gnutls])
+		AC_MSG_ERROR([invalid value --with-libcrypto=$with_libcrypto, expected openssl, gnutls, or none])
 		;;
 esac
 AC_CHECK_FUNCS([SHA1])
+AC_CHECK_FUNCS([MD5])
 
 AC_CHECK_LIB([crypt],[main])
 

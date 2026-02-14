@@ -39,7 +39,7 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/openssl.h>
 #else
-#error No SSL library available (need OpenSSL or GnuTLS)
+/* No crypto library; password hashing functions will be unavailable. */
 #endif
 
 #ifndef HAVE_MKDTEMP
@@ -169,6 +169,7 @@ g_string_append_ssha(GString *string, char *key)
 int
 g_string_append_md5(GString *string, char *key)
 {
+#ifdef HAVE_MD5
 #if defined(HAVE_OPENSSL)
 	unsigned char tmp[EVP_MAX_MD_SIZE];
 	unsigned int len;
@@ -180,11 +181,16 @@ g_string_append_md5(GString *string, char *key)
 	g_string_append_base64(string, tmp, sizeof(tmp));
 #endif
 	return 1;
+#else
+	puts("Sorry, MD5 support not linked into ldapvi.");
+	return 0;
+#endif
 }
 
 int
 g_string_append_smd5(GString *string, char *key)
 {
+#ifdef HAVE_MD5
 #if defined(HAVE_OPENSSL)
 	unsigned char rand[4];
 	unsigned char tmp[EVP_MAX_MD_SIZE + sizeof(rand)];
@@ -217,4 +223,8 @@ g_string_append_smd5(GString *string, char *key)
 	g_string_append_base64(string, tmp, sizeof(tmp));
 #endif
 	return 1;
+#else
+	puts("Sorry, SMD5 support not linked into ldapvi.");
+	return 0;
+#endif
 }
