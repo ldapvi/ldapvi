@@ -33,18 +33,13 @@
 #include "config.h"
 
 #if defined(HAVE_OPENSSL)
-#include <openssl/sha.h>
-#include <openssl/md5.h>
+#include <openssl/evp.h>
 #include <openssl/rand.h>
 #elif defined(HAVE_GNUTLS)
 #include <gnutls/gnutls.h>
 #include <gnutls/openssl.h>
 #else
 #error No SSL library available (need OpenSSL or GnuTLS)
-#endif
-
-#ifndef HAVE_RAND_PSEUDO_BYTES
-#define RAND_pseudo_bytes RAND_bytes
 #endif
 
 #ifndef HAVE_MKDTEMP
@@ -112,9 +107,16 @@ int
 g_string_append_sha(GString *string, char *key)
 {
 #ifdef HAVE_SHA1
+#if defined(HAVE_OPENSSL)
+	unsigned char tmp[EVP_MAX_MD_SIZE];
+	unsigned int len;
+	EVP_Digest(key, strlen(key), tmp, &len, EVP_sha1(), NULL);
+	g_string_append_base64(string, tmp, len);
+#else
 	unsigned char tmp[SHA_DIGEST_LENGTH];
 	SHA1((unsigned char *) key, strlen(key), tmp);
 	g_string_append_base64(string, tmp, sizeof(tmp));
+#endif
 	return 1;
 #else
 	puts("Sorry, SHA1 support not linked into ldapvi.");
@@ -126,6 +128,23 @@ int
 g_string_append_ssha(GString *string, char *key)
 {
 #ifdef HAVE_SHA1
+#if defined(HAVE_OPENSSL)
+	unsigned char rand[4];
+	unsigned char tmp[EVP_MAX_MD_SIZE + sizeof(rand)];
+	unsigned int digest_len;
+	EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+
+	RAND_bytes(rand, sizeof(rand));
+
+	EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+	EVP_DigestUpdate(ctx, key, strlen(key));
+	EVP_DigestUpdate(ctx, rand, sizeof(rand));
+	EVP_DigestFinal_ex(ctx, tmp, &digest_len);
+	EVP_MD_CTX_free(ctx);
+
+	memcpy(tmp + digest_len, rand, sizeof(rand));
+	g_string_append_base64(string, tmp, digest_len + sizeof(rand));
+#else
 	char rand[4];
 	unsigned char tmp[SHA_DIGEST_LENGTH + sizeof(rand)];
 	SHA_CTX SHA1context;
@@ -139,6 +158,7 @@ g_string_append_ssha(GString *string, char *key)
 
 	memcpy(tmp + SHA_DIGEST_LENGTH, rand, sizeof(rand));
 	g_string_append_base64(string, tmp, sizeof(tmp));
+#endif
 	return 1;
 #else
 	puts("Sorry, SHA1 support not linked into ldapvi.");
@@ -149,15 +169,39 @@ g_string_append_ssha(GString *string, char *key)
 int
 g_string_append_md5(GString *string, char *key)
 {
+#if defined(HAVE_OPENSSL)
+	unsigned char tmp[EVP_MAX_MD_SIZE];
+	unsigned int len;
+	EVP_Digest(key, strlen(key), tmp, &len, EVP_md5(), NULL);
+	g_string_append_base64(string, tmp, len);
+#else
 	unsigned char tmp[MD5_DIGEST_LENGTH];
 	MD5((unsigned char *) key, strlen(key), tmp);
 	g_string_append_base64(string, tmp, sizeof(tmp));
+#endif
 	return 1;
 }
 
 int
 g_string_append_smd5(GString *string, char *key)
 {
+#if defined(HAVE_OPENSSL)
+	unsigned char rand[4];
+	unsigned char tmp[EVP_MAX_MD_SIZE + sizeof(rand)];
+	unsigned int digest_len;
+	EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+
+	RAND_bytes(rand, sizeof(rand));
+
+	EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
+	EVP_DigestUpdate(ctx, key, strlen(key));
+	EVP_DigestUpdate(ctx, rand, sizeof(rand));
+	EVP_DigestFinal_ex(ctx, tmp, &digest_len);
+	EVP_MD_CTX_free(ctx);
+
+	memcpy(tmp + digest_len, rand, sizeof(rand));
+	g_string_append_base64(string, tmp, digest_len + sizeof(rand));
+#else
 	unsigned char rand[4];
 	unsigned char tmp[MD5_DIGEST_LENGTH + sizeof(rand)];
 	MD5_CTX MD5context;
@@ -171,6 +215,6 @@ g_string_append_smd5(GString *string, char *key)
 
 	memcpy(tmp + MD5_DIGEST_LENGTH, rand, sizeof(rand));
 	g_string_append_base64(string, tmp, sizeof(tmp));
-
+#endif
 	return 1;
 }

@@ -763,7 +763,7 @@ save_ldif(tparser *parser, GArray *offsets, char *clean, char *data,
 	if (gethostname(name->str + name->len, 300 - name->len) == -1)
 		syserr();
 	name->len = strlen(name->str);
-	g_string_sprintfa(name, "-%d.ldif", getpid());
+	g_string_append_printf(name, "-%d.ldif", getpid());
 
 	if ( (fd = open(name->str, O_WRONLY | O_CREAT | O_EXCL, 0600)) == -1) {
 		int error = errno;
