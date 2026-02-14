@@ -1412,10 +1412,10 @@ write_file_header(FILE *s, cmdline *cmdline)
 	int nlines = 0;
 
 	if (print_binary_mode == PRINT_UTF8 && !cmdline->ldif) {
-		/* Vim's "encoding" option affects more than just the file,
-		 * and "fileencoding" modelines don't work, so we emit an
-		 * Emacs-style coding cookie instead. */
-		fputs("# -*- coding: utf-8 -*-\n", s);
+		/* Emacs coding cookie + vim modeline for UTF-8.
+		 * Note: vim's "encoding" is disallowed in modelines;
+		 * use "fileencoding" instead. */
+		fputs("# -*- coding: utf-8 -*- vim:fileencoding=utf-8:\n", s);
 		nlines++;
 	}
 	if (cmdline->ldif) {
