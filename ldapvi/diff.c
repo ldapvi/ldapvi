@@ -210,8 +210,6 @@ frob_ava(tentry *entry, int mode, char *ad, char *data, int n)
 	return 0;
 }
 
-#define safe_str2dn ldap_str2dn
-
 /*
  * Call frob_ava for every ava in DN's (first) RDN.
  * DN must be valid.
@@ -230,7 +228,7 @@ frob_rdn(tentry *entry, char *dn, int mode)
 	int i;
 	int rc = 0;
 
-	safe_str2dn(dn, &olddn, LDAP_DN_FORMAT_LDAPV3);
+	ldap_str2dn(dn, &olddn, LDAP_DN_FORMAT_LDAPV3);
 
 #ifdef LIBLDAP21
 	rdn = (**olddn)[0];
