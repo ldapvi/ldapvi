@@ -692,16 +692,10 @@ wofuer was das doch gleich da?
 		 values="never|allow|try|strict"
 		 brief="Level of TLS strictness">
 	This option controls the level of certificate checking
-	strictness.  Default is <tt>try</tt>.
+	strictness.  Default is <tt>strict</tt>.
 	<p>
-	  fixme: If anyone has a concise description of what these
-	  values mean rather than the wishy-washy explanations I can
-	  find right now, please tell.  Thanks.
-	</p>
-	<p>
-	  (Basically, if you want to use SSL but your certificate is
-	  self-signed, you might want to experiment with something less
-	  than <tt>try</tt>.)
+          Note: This only takes effect when ldaps:// or -Z are used.
+          Strict mode does not prevet ldap:// from being connected to without TLS.
 	</p>
       </parameter>
       <parameter long="read" args="DN" brief="Read this entry">

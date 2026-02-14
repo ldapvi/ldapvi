@@ -213,7 +213,7 @@ init_cmdline(cmdline *cmdline)
 	cmdline->managedsait = 0;
 	cmdline->sortkeys = 0;
 	cmdline->starttls = 0;
-	cmdline->tls = LDAP_OPT_X_TLS_TRY;
+	cmdline->tls = LDAP_OPT_X_TLS_HARD;
 	cmdline->deref = LDAP_DEREF_NEVER;
 	cmdline->verbose = 0;
 	cmdline->noquestions = 0;

@@ -36,6 +36,7 @@ fn ldapsearch(filter: &str) -> String {
     let output = Command::new(ldapvi_binary())
         .args([
             "--ldapsearch",
+            "--tls", "never",
             "--bind", "simple",
             "-h", &ldap_url(),
             "-D", "cn=admin,dc=example,dc=com",
@@ -56,6 +57,7 @@ fn ldapsearch_test_user() -> String {
 /// Common args for authenticated bind against the test LDAP.
 fn bind_args() -> Vec<String> {
     vec![
+        "--tls".into(), "never".into(),
         "--bind".into(), "simple".into(),
         "-h".into(), ldap_url(),
         "-D".into(), "cn=admin,dc=example,dc=com".into(),
@@ -165,6 +167,7 @@ fn ensure_slapd() {
             let result = Command::new(&ldapvi)
                 .args([
                     "--ldapsearch",
+                    "--tls", "never",
                     "--bind", "simple",
                     "-h", &ldap_url(),
                     "-b", "",
@@ -897,6 +900,7 @@ fn ldif_import_base64_dn_no_padding() {
     let _ = Command::new(ldapvi_binary())
         .args([
             "--ldapdelete",
+            "--tls", "never",
             "--bind", "simple",
             "-h", &ldap_url(),
             "-D", "cn=admin,dc=example,dc=com",
@@ -930,6 +934,7 @@ fn ldif_import_base64_dn_no_padding() {
     let output = Command::new(ldapvi_binary())
         .args([
             "--ldapmodify", "--ldapvi", "--add",
+            "--tls", "never",
             "--bind", "simple",
             "-h", &ldap_url(),
             "-D", "cn=admin,dc=example,dc=com",
@@ -960,6 +965,7 @@ fn ldif_import_base64_dn_no_padding() {
     let _ = Command::new(ldapvi_binary())
         .args([
             "--ldapdelete",
+            "--tls", "never",
             "--bind", "simple",
             "-h", &ldap_url(),
             "-D", "cn=admin,dc=example,dc=com",
@@ -983,6 +989,7 @@ fn sasl_secprops_is_applied() {
     let output = Command::new(ldapvi_binary())
         .args([
             "--sasl-secprops", "bogus",
+            "--tls", "never",
             "--bind", "simple",
             "-h", &ldap_url(),
             "-D", "cn=admin,dc=example,dc=com",
