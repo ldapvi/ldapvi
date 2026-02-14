@@ -286,7 +286,7 @@ entroid_remove_ad(tentroid *entroid, char *ad)
 
 	if (s) {
 		int n = s - ad;
-		name = xalloc(n);
+		name = xalloc(n + 1);
 		memcpy(name, ad, n);
 	} else
 		name = ad;

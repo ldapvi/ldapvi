@@ -144,7 +144,7 @@ entroid_set_message(LDAP *ld, tentroid *entroid, LDAPMessage *entry)
 	return entroid;
 }
 
-static void
+void
 search_subtree(FILE *s, LDAP *ld, GArray *offsets, char *base,
 	       cmdline *cmdline, LDAPControl **ctrls, int notty, int ldif,
 	       tschema *schema)

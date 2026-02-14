@@ -12,12 +12,23 @@ dist: ldapvi ldapvi.1
 ldapvi: ldapvi.o data.o diff.o error.o misc.o parse.o port.o print.o search.o base64.o arguments.o parseldif.o schema.c sasl.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
+test1: test_main.o test_stubs.o test_parseldif.o test_diff.o test_parse.o test_print.o test_data.o test_schema.o diff.o parseldif.o parse.o print.o data.o schema.o base64.o error.o
+	$(CC) $(CFLAGS) -o $@ $^ -lglib-2.0 -lldap -llber -lcrypt
+
+test2: test_search.o test_search_stubs.o search.o data.o
+	$(CC) $(CFLAGS) -o $@ $^ -lglib-2.0
+
+.PHONY: test
+test: test1 test2
+	./test1
+	./test2
+
 %.o: %.c common.h
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 .PHONY: clean
 clean:
-	rm -f ldapvi *.o gmon.out
+	rm -f ldapvi test_ldapvi test_search *.o gmon.out
 
 ldapvi.1: version.h ldapvi ldapvi.1.in
 	help2man -n "LDAP client" -N ./ldapvi | cat - ldapvi.1.in >ldapvi.1.out

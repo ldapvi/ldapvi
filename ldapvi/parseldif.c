@@ -228,7 +228,7 @@ ldif_read_line1(FILE *s, GString *name, GString *value)
 			fputs("Error: Invalid Base64 string.\n", stderr);
 			return -1;
 		}
-		value->len = len;
+		g_string_truncate(value, len);
 		break;
 	case '<':
 		if (ldif_read_safe(s, value) == -1) return -1;
