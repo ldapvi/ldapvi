@@ -262,6 +262,7 @@ typedef struct dialog {
 
 int carray_cmp(GArray *a, GArray *b);
 int carray_ptr_cmp(const void *aa, const void *bb);
+void fdcp(int fdsrc, int fddst);
 void cp(char *src, char *dst, off_t skip, int append);
 void fcopy(FILE *src, FILE *dst);
 char choose(char *prompt, char *charbag, char *help);

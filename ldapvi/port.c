@@ -35,6 +35,7 @@
 #if defined(HAVE_OPENSSL)
 #include <openssl/sha.h>
 #include <openssl/md5.h>
+#include <openssl/rand.h>
 #elif defined(HAVE_GNUTLS)
 #include <gnutls/gnutls.h>
 #include <gnutls/openssl.h>

@@ -51,6 +51,8 @@ yourfault(char *str)
 void
 ldaperr(LDAP *ld, char *str)
 {
-	ldap_perror(ld, str);
+	int err;
+	ldap_get_option(ld, LDAP_OPT_RESULT_CODE, &err);
+	fprintf(stderr, "%s: %s\n", str, ldap_err2string(err));
 	exit(1);
 }

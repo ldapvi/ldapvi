@@ -225,7 +225,7 @@ safe_str2dn(char *str, LDAPDN *out, int flags)
         struct berval bv;
         bv.bv_val = str;
         bv.bv_len = strlen(str);
-        ldap_bv2dn_x(&bv, out, flags);
+        ldap_bv2dn(&bv, out, flags);
 }
 #else
 #error oops

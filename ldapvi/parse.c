@@ -17,6 +17,7 @@
  */
 #define _XOPEN_SOURCE
 #include <unistd.h>
+#include <crypt.h>
 #include "common.h"
 
 #define fast_g_string_append_c(gstring, c)				\
