@@ -968,3 +968,36 @@ fn ldif_import_base64_dn_no_padding() {
         ])
         .output();
 }
+
+// ── Regression: --sasl-secprops is actually applied ──────────
+
+#[test]
+fn sasl_secprops_is_applied() {
+    let _lock = serial();
+    ensure_slapd();
+
+    // Pass an invalid sasl-secprops value.  Before the fix,
+    // the option was parsed but never passed to ldap_set_option,
+    // so any value was silently ignored.  After the fix, the
+    // invalid value causes ldap_set_option to fail.
+    let output = Command::new(ldapvi_binary())
+        .args([
+            "--sasl-secprops", "bogus",
+            "--bind", "simple",
+            "-h", &ldap_url(),
+            "-D", "cn=admin,dc=example,dc=com",
+            "-w", "secret",
+        ])
+        .output()
+        .expect("ldapvi failed to execute");
+
+    assert!(
+        !output.status.success(),
+        "ldapvi should reject invalid sasl-secprops, but exited successfully",
+    );
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("LDAP_OPT_X_SASL_SECPROPS"),
+        "error should mention LDAP_OPT_X_SASL_SECPROPS:\n{stderr}",
+    );
+}

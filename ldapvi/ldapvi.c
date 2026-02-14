@@ -724,6 +724,10 @@ do_connect(char *server, bind_options *bind_options,
 	}
 	if (!profileonlyp)
 		init_sasl_arguments(ld, bind_options);
+	if (bind_options->sasl_secprops)
+		if (ldap_set_option(ld, LDAP_OPT_X_SASL_SECPROPS,
+				    bind_options->sasl_secprops))
+			ldaperr(ld, "ldap_set_option(LDAP_OPT_X_SASL_SECPROPS)");
 	if (ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &drei))
 		ldaperr(ld, "ldap_set_option(LDAP_OPT_PROTOCOL_VERSION)");
 	if (starttls)
