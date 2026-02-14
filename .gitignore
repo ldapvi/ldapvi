@@ -8,4 +8,4 @@ ldapvi/config.status
 ldapvi/ldapvi
 ldapvi/test1
 ldapvi/test2
-integration-test/test-driver/target/
+integration-test/target/

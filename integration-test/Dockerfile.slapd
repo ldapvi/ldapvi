@@ -1,0 +1,54 @@
+FROM alpine:3.21
+
+RUN apk add --no-cache openldap openldap-back-mdb openldap-clients
+
+# Create database directory
+RUN mkdir -p /var/lib/openldap/openldap-data && \
+    chown ldap:ldap /var/lib/openldap/openldap-data
+
+# slapd.conf: minimal config with MDB backend
+RUN cat > /etc/openldap/slapd.conf <<'EOF'
+include     /etc/openldap/schema/core.schema
+include     /etc/openldap/schema/cosine.schema
+include     /etc/openldap/schema/inetorgperson.schema
+
+modulepath  /usr/lib/openldap
+moduleload  back_mdb
+
+pidfile     /run/openldap/slapd.pid
+argsfile    /run/openldap/slapd.args
+
+database    mdb
+maxsize     1073741824
+suffix      "dc=example,dc=com"
+rootdn      "cn=admin,dc=example,dc=com"
+rootpw      secret
+directory   /var/lib/openldap/openldap-data
+
+index objectClass eq
+EOF
+
+# Seed with a base entry and a test user
+RUN cat > /tmp/seed.ldif <<'EOF'
+dn: dc=example,dc=com
+objectClass: dcObject
+objectClass: organization
+dc: example
+o: Example Inc.
+
+dn: cn=Test User,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Test User
+sn: User
+mail: test@example.com
+EOF
+
+RUN mkdir -p /run/openldap && \
+    slapd -u ldap -g ldap && sleep 1 && \
+    ldapadd -x -D "cn=admin,dc=example,dc=com" -w secret -f /tmp/seed.ldif && \
+    kill $(cat /run/openldap/slapd.pid) && \
+    rm /tmp/seed.ldif
+
+EXPOSE 389
+
+CMD ["slapd", "-d", "256", "-u", "ldap", "-g", "ldap"]

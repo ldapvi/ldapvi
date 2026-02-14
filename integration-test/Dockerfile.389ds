@@ -1,0 +1,64 @@
+FROM fedora:41
+
+RUN dnf install -y 389-ds-base && dnf clean all
+
+# Create a 389-ds instance via dscreate INF file.
+# Use a temporary password that satisfies the 8-char minimum.
+RUN cat > /tmp/instance.inf <<'EOF'
+[general]
+full_machine_name = localhost
+start = False
+
+[slapd]
+instance_name = localhost
+root_dn = cn=admin,dc=example,dc=com
+root_password = temporary_password
+port = 389
+
+[backend-userroot]
+suffix = dc=example,dc=com
+sample_entries = no
+EOF
+
+RUN dscreate from-file /tmp/instance.inf && rm /tmp/instance.inf
+
+# Change root password to "secret" (matching the slapd variant).
+# dscreate enforces an 8-char minimum, but ldapmodify does not.
+RUN dsctl localhost start && \
+    ldapmodify -x -H ldap://localhost:389 \
+        -D "cn=admin,dc=example,dc=com" -w temporary_password <<'LDIF' && \
+    dsctl localhost stop
+dn: cn=config
+changetype: modify
+replace: nsslapd-rootpw
+nsslapd-rootpw: secret
+LDIF
+
+# Seed with a base entry and a test user (same data as slapd variant).
+RUN cat > /tmp/seed.ldif <<'EOF'
+dn: dc=example,dc=com
+objectClass: dcObject
+objectClass: organization
+dc: example
+o: Example Inc.
+
+dn: cn=Test User,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: Test User
+sn: User
+mail: test@example.com
+EOF
+
+RUN dsctl localhost start && \
+    for i in $(seq 1 30); do \
+        ldapadd -x -H ldap://localhost:389 \
+            -D "cn=admin,dc=example,dc=com" -w secret \
+            -f /tmp/seed.ldif && break; \
+        sleep 0.5; \
+    done && \
+    dsctl localhost stop && \
+    rm /tmp/seed.ldif
+
+EXPOSE 389
+
+CMD ["/usr/sbin/ns-slapd", "-D", "/etc/dirsrv/slapd-localhost", "-d", "0"]
