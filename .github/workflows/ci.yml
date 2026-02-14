@@ -75,3 +75,7 @@ jobs:
         env:
           LDAPVI_TEST_IMAGE: ldapvi-test-${{ matrix.ldap-server }}
         run: cargo test
+
+      - name: Docker logs (on failure)
+        if: failure()
+        run: docker logs ldapvi-inttest-${{ matrix.ldap-server }} 2>&1 | tail -80
