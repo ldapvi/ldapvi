@@ -1419,12 +1419,13 @@ write_file_header(FILE *s, cmdline *cmdline)
 		/* Emacs coding cookie + vim modeline for UTF-8.
 		 * Note: vim's "encoding" is disallowed in modelines;
 		 * use "fileencoding" instead. */
-		fputs("# -*- coding: utf-8 -*- vim:fileencoding=utf-8:\n", s);
+		fputs("# -*- coding: utf-8 -*- vim:ft=ldif:fileencoding=utf-8:\n", s);
 		nlines++;
 	}
 	if (cmdline->ldif) {
+		fputs("# -*- coding: utf-8 -*- vim:ft=ldif:fileencoding=utf-8:\n", s);
 		fputs("# " RFC_2849_URL "\n" "# " MANUAL_LDIF_URL "\n", s);
-		nlines += 2;
+		nlines += 3;
 	} else  {
 		fputs("# " MANUAL_SYNTAX_URL "\n", s);
 		nlines++;
