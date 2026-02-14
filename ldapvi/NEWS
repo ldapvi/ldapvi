@@ -1,4 +1,4 @@
-1.8 202y-mm-dd
+1.8 2026-02-14
   - Preserve order of attribute values.
   - new command line argument -y (thanks to David Bartley)
   - new configuration option `unpaged-help'

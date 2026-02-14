@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - '[0-9]*'
 
 jobs:
   release:
@@ -16,7 +16,7 @@ jobs:
 
       - name: Determine version
         id: version
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+        run: echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
 
       - name: Set version from tag
         run: |
