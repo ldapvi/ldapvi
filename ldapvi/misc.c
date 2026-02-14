@@ -507,7 +507,7 @@ dialog(char *header, tdialog *d, int n, int start)
 	}
 
 	rl_variable_bind("horizontal-scroll-mode", "on");
-	rl_inhibit_completion = 1; /* fixme */
+	rl_inhibit_completion = 1; /* completion is not useful in dialogs */
 
 	for (i = 0; i < n; i++)
 		max = MAX(max, strlen(d[i].prompt));

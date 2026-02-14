@@ -50,7 +50,7 @@ compare(tparser *p, thandler *handler, void *userdata, GArray *offsets,
 		int n;
 
 		if (!cmdline) {
-			fputs("oops: unexpected error in handler\n", stderr);
+			fputs("error: unexpected error in handler\n", stderr);
 			exit(1);
 		}
 
@@ -746,10 +746,10 @@ do_connect(char *server, bind_options *bind_options,
 }
 
 /*
- * fixme: brauchen wir das mit dem user?  dann sollten wir hier noch
- * sasl support vorsehen
+ * fixme: do we need the user parameter?  if so, we should add
+ * SASL support here.
  *
- * ldapvi-Kommandozeile konnte auch nicht schaden
+ * An ldapvi command line option for this wouldn't hurt either.
  */
 static int
 save_ldif(tparser *parser, GArray *offsets, char *clean, char *data,
@@ -1014,12 +1014,10 @@ skip(tparser *p, char *dataname, GArray *offsets, cmdline *cmdline)
 			g_array_index(offsets, long, atoi(key)) = -1;
 		free(key);
 	} else {
-                /* Im Normalfall wollen wir einen Eintrag in data
-                 * ueberspringen.  Wenn aber in data nichts mehr steht,
-                 * sind wir ueber die eigentlichen Aenderungen schon
-                 * hinweg und es handelt sich um eine Loeschung.  In
-                 * diesem Fall muessen wir nur das Offset aus der
-                 * Tabelle entfernen. */
+                /* Normally we want to skip an entry in data.
+                 * But if data is exhausted, the remaining entries
+                 * in the offset table are deletions -- just remove
+                 * the offset. */
                 int n;
                 for (n = 0; n < offsets->len; n++)
                         if (g_array_index(offsets, long, n) >= 0) {
@@ -1047,7 +1045,7 @@ entroid_set_entry(LDAP *ld, tentroid *entroid, tentry *entry)
 
 		{
 			char zero = 0;
-			/* PFUSCH!  die GArrays muessen absolut weg! */
+			/* Hack: temporarily null-terminate the GArray for use as a C string. */
 			g_array_append_val(av, zero);
 			av->len--;
 		}
@@ -1414,11 +1412,9 @@ write_file_header(FILE *s, cmdline *cmdline)
 	int nlines = 0;
 
 	if (print_binary_mode == PRINT_UTF8 && !cmdline->ldif) {
-		/* we used to write an encoding line for vim here, but
-		 * the "encoding" option affects more than just the file,
-		 * and a "fileencoding" doesn't actually seem exist.  Very
-		 * disappointing, but until a real solution turns up, it's
-		 * better to do nothing. */ 
+		/* Vim's "encoding" option affects more than just the file,
+		 * and "fileencoding" modelines don't work, so we emit an
+		 * Emacs-style coding cookie instead. */
 		fputs("# -*- coding: utf-8 -*-\n", s);
 		nlines++;
 	}
@@ -1534,12 +1530,12 @@ main_write_files(
 			if (!source)
 				source = stdin;
 			if (!can_seek(source)) {
-				/* einfach clean als tmpfile nehmen */
+				/* use the clean file as a temporary buffer */
 				if ( !(tmp = fopen(clean, "w+"))) syserr();
 				fcopy(source, tmp);
 				if (fseek(tmp, 0, SEEK_SET) == -1) syserr();
 				source = tmp;
-				/* source war stdin, kann offen bleiben */
+				/* source was stdin, no need to close it */
 			}
 		}
 

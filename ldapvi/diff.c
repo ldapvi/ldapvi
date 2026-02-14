@@ -147,8 +147,8 @@ long_array_invert(GArray *array, int i)
 int
 fastcmp(FILE *s, FILE *t, long p, long q, long n)
 {
-	char *b = xalloc(n); /* XXX */
-	char *c = xalloc(n); /* XXX */
+	char *b = xalloc(n);
+	char *c = xalloc(n);
 	int rc = -1;
 	long p_save;
 	long q_save;
@@ -228,7 +228,7 @@ safe_str2dn(char *str, LDAPDN *out, int flags)
         ldap_bv2dn(&bv, out, flags);
 }
 #else
-#error oops
+#error No SSL library available (need OpenSSL or GnuTLS)
 #endif
 
 /*
@@ -258,7 +258,7 @@ frob_rdn(tentry *entry, char *dn, int mode)
 #endif
 	for (i = 0; rdn[i]; i++) {
 		LDAPAVA *ava = rdn[i];
-		char *ad = ava->la_attr.bv_val; /* XXX */
+		char *ad = ava->la_attr.bv_val;
 		struct berval *bv = &ava->la_value;
 		if (frob_ava(entry, mode, ad, bv->bv_val, bv->bv_len) == -1) {
 			rc = -1;
@@ -628,7 +628,7 @@ process_deletions(tparser *p,
 }
 
 /*
- * Die compare_streams-Schleife ist das Herz von ldapvi.
+ * The compare_streams loop is the heart of ldapvi.
  *
  * Read two ldapvi data files in streams CLEAN and DATA and compare them.
  *

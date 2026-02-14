@@ -107,7 +107,7 @@ print_base64(
 	}
 }
 
-/* na toll, copy und paste von oben */
+/* Like b64_ntop above, but append to a GString. */
 void
 g_string_append_base64(
 	GString *string, unsigned char const *src, size_t srclength)

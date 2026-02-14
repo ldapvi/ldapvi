@@ -437,22 +437,22 @@ error:
 }
 
 /*
- * Lies die erste Zeile eines beliebigen Records nach position `offset' in `s'.
- * Setze *pos (falls pos != 0).
- * Liefere 0 bei Erfolg, -1 sonst.
- * Bei Erfolg:
- *   - pos ist die exakte Anfangsposition.
- *   - Setze *key auf den Schluessel (falls key != 0).
- *   - Setze *dn auf den Distinguished Name (falls dn != 0).
- * EOF ist kein Fehler und liefert *key = 0 (falls key != 0);
+ * Read the first line of any record at position `offset' in `s'.
+ * Set *pos (if pos != 0).
+ * Return 0 on success, -1 otherwise.
+ * On success:
+ *   - pos is the exact starting position.
+ *   - Set *key to the key (if key != 0).
+ *   - Set *dn to the Distinguished Name (if dn != 0).
+ * EOF is not an error and yields *key = 0 (if key != 0).
  *
- * Der Schluessel ist dabei
- *   "delete" fuer "changetype: delete"
- *   "modify" fuer "changetype: modify"
- *   "rename" fuer "changetype: moddn" und "changetype: modrdn",
- *   "add" fuer "changetype: add" erlauben wir mal ganz frech ebenfalls
- * oder andernfalls der Wert von "ldapvi-key: ...", das als erste
- * Zeile im attrval-record erscheinen muss.
+ * The key is:
+ *   "delete" for "changetype: delete"
+ *   "modify" for "changetype: modify"
+ *   "rename" for "changetype: moddn" and "changetype: modrdn"
+ *   "add" for "changetype: add" (also accepted here)
+ * otherwise the value of "ldapvi-key: ...", which must appear as
+ * the first line in the attrval record.
  */
 static int
 ldif_read_header(GString *tmp1, GString *tmp2,
@@ -544,14 +544,14 @@ ldif_read_attrval_body(GString *tmp1, GString *tmp2, FILE *s, tentry *entry)
 }
 
 /*
- * Lies ein attrval-record nach position `offset' in `s'.
- * Setze *pos (falls pos != 0).
- * Liefere 0 bei Erfolg, -1 sonst.
- * Bei Erfolg:
- *   - pos ist die exakte Anfangsposition.
- *   - Setze *entry auf den gelesenen Eintrag (falls entry != 0).
- *   - Setze *key auf den Schluessel (falls key != 0).
- * EOF ist kein Fehler und liefert *key = 0 (falls key != 0);
+ * Read an attrval record at position `offset' in `s'.
+ * Set *pos (if pos != 0).
+ * Return 0 on success, -1 otherwise.
+ * On success:
+ *   - pos is the exact starting position.
+ *   - Set *entry to the parsed entry (if entry != 0).
+ *   - Set *key to the key (if key != 0).
+ * EOF is not an error and yields *key = 0 (if key != 0).
  */
 int
 ldif_read_entry(FILE *s, long offset, char **key, tentry **entry, long *pos)
@@ -587,14 +587,13 @@ cleanup:
 }
 
 /*
- * Lies die ersten beiden Zeilen eines beliebigen Records nach position
- * `offset' in `s'.
+ * Read the first two lines of any record at position `offset' in `s'.
  *
- * Setze *pos (falls pos != 0).
- * Liefere 0 bei Erfolg, -1 sonst.
- * Bei Erfolg:
- *   - pos ist die exakte Anfangsposition.
- *   - Setze *key auf den Schluessel (falls key != 0).
+ * Set *pos (if pos != 0).
+ * Return 0 on success, -1 otherwise.
+ * On success:
+ *   - pos is the exact starting position.
+ *   - Set *key to the key (if key != 0).
  */
 int
 ldif_peek_entry(FILE *s, long offset, char **key, long *pos)
@@ -609,12 +608,12 @@ ldif_peek_entry(FILE *s, long offset, char **key, long *pos)
 }
 
 /*
- * Lies ein rename-record nach position `offset' in `s'.
- * Liefere 0 bei Erfolg, -1 sonst.
- * Bei Erfolg:
- *   - Setze *dn1 auf den alten DN.
- *   - Setze *dn2 auf den neuen DN.
- *   - *deleteoldrdn auf 1 oder 0;
+ * Read a rename record at position `offset' in `s'.
+ * Return 0 on success, -1 otherwise.
+ * On success:
+ *   - Set *dn1 to the old DN.
+ *   - Set *dn2 to the new DN.
+ *   - Set *deleteoldrdn to 1 or 0.
  */
 int
 ldif_read_rename(FILE *s, long offset, char **dn1, char **dn2,
@@ -671,11 +670,11 @@ ldif_read_delete(FILE *s, long offset, char **dn)
 }
 
 /*
- * Lies ein modify-record nach position `offset' in `s'.
- * Liefere 0 bei Erfolg, -1 sonst.
- * Bei Erfolg:
- *   - Setze *dn auf den DN.
- *   - Setze *mods auf die Aenderungen.
+ * Read a modify record at position `offset' in `s'.
+ * Return 0 on success, -1 otherwise.
+ * On success:
+ *   - Set *dn to the DN.
+ *   - Set *mods to the modifications.
  */
 int
 ldif_read_modify(FILE *s, long offset, char **dn, LDAPMod ***mods)

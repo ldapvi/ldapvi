@@ -21,7 +21,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <glib.h>
-/* fixme: */
+/* Suppress deprecation warnings from libldap */
 #define LDAP_DEPRECATED 1
 #include <ldap.h>
 #include <ldap_schema.h>
@@ -200,7 +200,7 @@ typedef struct tparser {
 	parser_delete delete;
 	parser_modify modify;
 
-	print_entry print; /* ja, das muss so sein */
+	print_entry print; /* needed to reconstruct entries during diff */
 } tparser;
 
 extern tparser ldif_parser;

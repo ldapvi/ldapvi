@@ -163,8 +163,7 @@ attribute_remove_value(tattribute *a, char *data, int n)
 }
 
 /*
- * Aus irgendwelchen Gruenden habe ich mal beschlossen, GArrays mit chars drin
- * statt GStrings zu nehmen fuer die Attributwerte.  Wie unpraktisch.
+ * Convert a GArray of chars to a null-terminated string.
  */
 char *
 array2string(GArray *av)

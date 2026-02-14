@@ -40,7 +40,7 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/openssl.h>
 #else
-#error oops
+#error No SSL library available (need OpenSSL or GnuTLS)
 #endif
 
 #ifndef HAVE_RAND_PSEUDO_BYTES

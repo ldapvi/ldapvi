@@ -285,7 +285,7 @@ print_ldapvi_modrdn(FILE *s, char *olddn, char *newrdn, int deleteoldrdn)
 	print_attrval(s, olddn, strlen(olddn), 1);
 	fputs(deleteoldrdn ? "\nreplace" : "\nadd", s);
 
-	/* fixme, siehe notes */
+	/* fixme: see notes */
 	tmp = *newrdns;
 	*newrdns = newrdn;
 	newdn = rdns2gstring(newrdns);
