@@ -21,11 +21,11 @@
 
   <section title="Download">
     <p>
-      <b>Tarball:</b> <a href="http://www.lichteblau.com/download/ldapvi-1.7.tar.gz">ldapvi-1.7.tar.gz</a>.<br/>
-      Older versions: 1.[<a href="http://www.lichteblau.com/download/ldapvi-1.6.tar.gz">6</a><a href="http://www.lichteblau.com/download/ldapvi-1.5.tar.gz">5</a><a href="http://www.lichteblau.com/download/ldapvi-1.4.tar.gz">4</a><a href="http://www.lichteblau.com/download/ldapvi-1.3.tar.gz">3</a><a href="http://www.lichteblau.com/download/ldapvi-1.2.tar.gz">2</a><a href="http://www.lichteblau.com/download/ldapvi-1.1.tar.gz">1</a><a href="http://www.lichteblau.com/download/ldapvi-1.0.tar.gz">0</a>]<br/>
-      Cygwin binary: <a href="http://www.lichteblau.com/download/ldapvi.exe">ldapvi.exe</a><br/>
+      <b>Tarball:</b> <a href="http://www.lichteblau.com/download/ldapvi-1.8.tar.gz">ldapvi-1.8.tar.gz</a>.<br/>
+      Older versions: 1.[<a href="http://www.lichteblau.com/download/ldapvi-1.7.tar.gz">7</a><a href="http://www.lichteblau.com/download/ldapvi-1.6.tar.gz">6</a><a href="http://www.lichteblau.com/download/ldapvi-1.5.tar.gz">5</a><a href="http://www.lichteblau.com/download/ldapvi-1.4.tar.gz">4</a><a href="http://www.lichteblau.com/download/ldapvi-1.3.tar.gz">3</a><a href="http://www.lichteblau.com/download/ldapvi-1.2.tar.gz">2</a><a href="http://www.lichteblau.com/download/ldapvi-1.1.tar.gz">1</a><a href="http://www.lichteblau.com/download/ldapvi-1.0.tar.gz">0</a>]<br/>
       Changelog: <a href="ldapvi-news.txt">NEWS</a><br/>
       <b>git:</b> <a href="http://www.lichteblau.com/git/ldapvi.git">http://www.lichteblau.com/git/ldapvi.git</a>
+      <b>or</b> <a href="http://www.github.com/ldapvi/ldapvi">github</a>
     </p>
   </section>
 

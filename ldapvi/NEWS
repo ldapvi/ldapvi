@@ -1,9 +1,22 @@
-1.8 2007-mm-dd
+1.8 202y-mm-dd
   - Preserve order of attribute values.
   - new command line argument -y (thanks to David Bartley)
   - new configuration option `unpaged-help'
   - FreeBSD install(1) fix, thanks to Ulrich Spoerlein
   - use $DESTDIR, thanks to Gavin Henry
+  - Build fixes for modern dependencies
+  - Add Debian vim:fileencoding patch (thanks to Devin J. Pohly)
+  - Fix manpage (thanks to Rhonda D'Vine)
+  - Command line --base overrides bases in profile (Thanks to Uwe Sauter)
+  - Fix null termination in base64 (Thanks to ktetzlaff)
+  - Use $(DESTDIR) for packaging with rpm (thanks to Matěj Cepl)
+  - declare some void functions to be really void (thanks to Björn Jacke)
+  - fix use-after-free in sasl code (thanks to Enrico Scholz)
+  - Remove ldap_str2dn compatibility kludge (thanks to Florian Weimer)
+  - Do not define _XOPEN_SOURCE in parse.c (thanks to Florian Weimer)
+  - Fix sasl-secprops (Thanks to Jimmy Hedman)
+  - Set ldif file format in vim modeline (Thanks to SATOH Fumiyasu)
+  - Fix the default for --tls to be strict (Thanks to Hallvard Breien Furuseth)
 
 1.7 2007-05-05
   - Fixed buffer overrun in home_filename(), thanks to Thomas Friebel.
