@@ -41,7 +41,7 @@ Disable or enable SASL.
 .TP
 \fB\-\-bind\-dialog\fR [never,auto,always]
 Interactive login dialog.
-.SS "SASL options (these parameters set --bind sasl):"
+.SS "SASL options (these parameters set \-\-bind sasl):"
 .HP
 \fB\-I\fR, \fB\-\-sasl\-interactive\fR Set \fB\-\-bind\-dialog\fR always.
 .TP
@@ -177,10 +177,10 @@ Report bugs to "ldapvi@lists.askja.de".
 Assuming a suitably configured LDAP library, run ldapvi without arguments
 to see all entries available. 
 
-Otherwise, try `ldapvi -h HOSTNAME --discover' to query the ROOT DSE for
+Otherwise, try `ldapvi \-h HOSTNAME \-\-discover' to query the ROOT DSE for
 available naming contexts.
 
-Once that works, run `ldapvi -h HOSTNAME --discover --config' to
+Once that works, run `ldapvi \-h HOSTNAME \-\-discover \-\-config' to
 generate sample configuration that can be pasted into ~/.ldaprc or
 /etc/ldap/ldap.conf.
 
