@@ -55,5 +55,6 @@ void run_parse_tests(void);
 void run_print_tests(void);
 void run_data_tests(void);
 void run_schema_tests(void);
+void run_arguments_tests(void);
 
 #endif

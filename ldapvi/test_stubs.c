@@ -89,6 +89,36 @@ int adjoin_ptr(GPtrArray *a, void *p)
 	return i;
 }
 
+/* Stubs for misc.c functions needed by arguments.c */
+char *test_home_dir = NULL;
+
+char *home_filename(char *name)
+{
+	char *home = test_home_dir ? test_home_dir : getenv("HOME");
+	int n;
+	char *result;
+	if (!home) return 0;
+	n = strlen(home);
+	result = xalloc(n + 1 + strlen(name) + 1);
+	strcpy(result, home);
+	result[n] = '/';
+	strcpy(result + n + 1, name);
+	return result;
+}
+
+int adjoin_str(GPtrArray *strs, char *str)
+{
+	int i;
+	for (i = 0; i < strs->len; i++)
+		if (!strcmp(str, g_ptr_array_index(strs, i)))
+			return -1;
+	g_ptr_array_add(strs, str);
+	return i;
+}
+
+int pipeview(int *fd) { (void)fd; return 0; }
+void pipeview_wait(int pid) { (void)pid; }
+
 /* Stub for search.c get_entry (schema_new calls it; we never call schema_new) */
 LDAPMessage *get_entry(LDAP *ld, char *dn, LDAPMessage **result)
 {

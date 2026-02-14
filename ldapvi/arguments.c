@@ -667,11 +667,21 @@ parse_arguments(int argc, const char **argv, cmdline *result, GPtrArray *ctrls)
 	}
 	parse_configuration(profile, result, ctrls);
 
-	poptResetContext(ctx);
-	while ( (c = poptGetNextOpt(ctx)) > 0) {
-		char *arg = (char *) poptGetOptArg(ctx);
-		if (c != 'p')
+	{
+		int profile_basedns = result->basedns->len;
+		int cleared_bases = 0;
+
+		poptResetContext(ctx);
+		while ( (c = poptGetNextOpt(ctx)) > 0) {
+			char *arg = (char *) poptGetOptArg(ctx);
+			if (c == 'p') continue;
+			if (c == 'b' && !cleared_bases && profile_basedns) {
+				g_ptr_array_remove_range(
+					result->basedns, 0, profile_basedns);
+				cleared_bases = 1;
+			}
 			parse_argument(c, arg, result, ctrls);
+		}
 	}
 	if (c != -1) {
 		fprintf(stderr, "%s: %s\n",

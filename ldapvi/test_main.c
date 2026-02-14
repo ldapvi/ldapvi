@@ -22,6 +22,8 @@ int main(void)
 	run_data_tests();
 	printf("\n");
 	run_schema_tests();
+	printf("\n");
+	run_arguments_tests();
 
 	printf("\n=== %d tests: %d passed, %d failed ===\n",
 	       tests_run, tests_passed, tests_failed);

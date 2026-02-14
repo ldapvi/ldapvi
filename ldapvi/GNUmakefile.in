@@ -15,8 +15,8 @@ ldapvi: ldapvi.o data.o diff.o error.o misc.o interactive.o parse.o port.o print
 test-ldapvi: ldapvi.o data.o diff.o error.o misc.o test_interactive.o parse.o port.o print.o search.o base64.o arguments.o parseldif.o schema.c sasl.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-test1: test_main.o test_stubs.o test_parseldif.o test_diff.o test_parse.o test_print.o test_data.o test_schema.o diff.o parseldif.o parse.o print.o data.o schema.o base64.o error.o
-	$(CC) $(CFLAGS) -o $@ $^ -lglib-2.0 -lldap -llber -lcrypt
+test1: test_main.o test_stubs.o test_parseldif.o test_diff.o test_parse.o test_print.o test_data.o test_schema.o test_arguments.o diff.o parseldif.o parse.o print.o data.o schema.o base64.o error.o arguments.o
+	$(CC) $(CFLAGS) -o $@ $^ -lglib-2.0 -lldap -llber -lcrypt -lpopt
 
 test2: test_search.o test_search_stubs.o search.o data.o
 	$(CC) $(CFLAGS) -o $@ $^ -lglib-2.0
