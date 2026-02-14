@@ -24,7 +24,7 @@ jobs:
         run: cargo fmt -- --check
 
       - name: Unit tests
-        run: cargo test
+        run: cargo test -p ldapvi -p popt
 
   integration-test:
     needs: build
