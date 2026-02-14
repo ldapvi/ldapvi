@@ -278,6 +278,8 @@ read_base64(
 		 */
 		if (state != 0)
 			return (-1);
+		if (target)
+			target[tarindex] = '\0';
 	}
 
 	return (tarindex);

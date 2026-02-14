@@ -885,3 +885,86 @@ fn continuous_commit() {
         "description should have been committed:\n{search_output}",
     );
 }
+
+// ── Regression: base64 DN without padding ────────────────────
+
+#[test]
+fn ldif_import_base64_dn_no_padding() {
+    let _lock = serial();
+    ensure_slapd();
+
+    // Clean up in case a previous run left the entry.
+    let _ = Command::new(ldapvi_binary())
+        .args([
+            "--ldapdelete",
+            "--bind", "simple",
+            "-h", &ldap_url(),
+            "-D", "cn=admin,dc=example,dc=com",
+            "-w", "secret",
+            "ou=abc,dc=example,dc=com",
+        ])
+        .output();
+
+    // Create a ldapvi-format file with a base64-encoded DN whose decoded
+    // length is a multiple of 3 (24 bytes → no padding).
+    // b3U9YWJjLGRjPWV4YW1wbGUsZGM9Y29t = "ou=abc,dc=example,dc=com"
+    //
+    // We use --ldapvi to force parsing through parse.c (the ldapvi-format
+    // parser), which does NOT use g_string_truncate after read_base64.
+    // Without the fix, read_base64() leaves leftover base64 chars after
+    // the decoded bytes, mangling the DN.
+    let tmpdir = tempfile::tempdir().expect("failed to create temp dir");
+    let input_path = tmpdir.path().join("test.ldapvi");
+    fs::write(
+        &input_path,
+        "add:: b3U9YWJjLGRjPWV4YW1wbGUsZGM9Y29t\n\
+         objectClass: organizationalUnit\n\
+         ou: abc\n\
+         \n",
+    )
+    .unwrap();
+
+    // Import via ldapvi --ldapmodify --ldapvi --add, which parses the
+    // input with the ldapvi-format parser (parse.c) instead of the LDIF
+    // parser (parseldif.c).
+    let output = Command::new(ldapvi_binary())
+        .args([
+            "--ldapmodify", "--ldapvi", "--add",
+            "--bind", "simple",
+            "-h", &ldap_url(),
+            "-D", "cn=admin,dc=example,dc=com",
+            "-w", "secret",
+        ])
+        .arg(input_path.to_str().unwrap())
+        .output()
+        .expect("ldapvi --ldapmodify --ldapvi --add failed to execute");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        output.status.success(),
+        "ldapvi --ldapmodify --ldapvi --add failed (exit {:?}):\n\
+         stdout: {stdout}\nstderr: {stderr}",
+        output.status.code(),
+    );
+
+    // Verify the entry was created with the correct DN.
+    let search_output = ldapsearch("(ou=abc)");
+    assert!(
+        search_output.contains("ou: abc"),
+        "entry with base64-decoded DN should exist in LDAP:\n{search_output}\n\
+         ldapmodify stdout: {stdout}\nstderr: {stderr}",
+    );
+
+    // Clean up.
+    let _ = Command::new(ldapvi_binary())
+        .args([
+            "--ldapdelete",
+            "--bind", "simple",
+            "-h", &ldap_url(),
+            "-D", "cn=admin,dc=example,dc=com",
+            "-w", "secret",
+            "ou=abc,dc=example,dc=com",
+        ])
+        .output();
+}

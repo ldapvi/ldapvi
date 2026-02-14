@@ -469,6 +469,61 @@ static int test_base64_dn(void)
 }
 
 
+static int test_base64_dn_no_padding(void)
+{
+	/* b3U9YWJjLGRjPWV4YW1wbGUsZGM9Y29t is base64 for
+	 * "ou=abc,dc=example,dc=com" (24 bytes, no padding).
+	 * Regression test for missing nul terminator in read_base64
+	 * when decoded length is a multiple of 3. */
+	FILE *f = make_input(
+		"dn:: b3U9YWJjLGRjPWV4YW1wbGUsZGM9Y29t\n"
+		"objectclass: organizationalUnit\n"
+		"ou: abc\n"
+		"\n");
+	char *key = 0;
+	tentry *entry = 0;
+	int rc = ldif_read_entry(f, -1, &key, &entry, 0);
+	fclose(f);
+	ASSERT_INT_EQ(rc, 0);
+	ASSERT_STREQ(entry_dn(entry), "ou=abc,dc=example,dc=com");
+
+	free(key);
+	entry_free(entry);
+	return 1;
+}
+
+static int test_base64_nul_termination(void)
+{
+	/* Direct test: read_base64 must nul-terminate output even when
+	 * the input has no padding (decoded length % 3 == 0). */
+	unsigned char buf[64];
+	int len;
+
+	/* "foo" = Zm9v (no padding, 3 bytes) */
+	memset(buf, 'X', sizeof(buf));
+	len = read_base64("Zm9v", buf, sizeof(buf));
+	ASSERT_INT_EQ(len, 3);
+	ASSERT(memcmp(buf, "foo", 3) == 0);
+	ASSERT_INT_EQ(buf[3], '\0');
+
+	/* "foobar" = Zm9vYmFy (no padding, 6 bytes) */
+	memset(buf, 'X', sizeof(buf));
+	len = read_base64("Zm9vYmFy", buf, sizeof(buf));
+	ASSERT_INT_EQ(len, 6);
+	ASSERT(memcmp(buf, "foobar", 6) == 0);
+	ASSERT_INT_EQ(buf[6], '\0');
+
+	/* "hello" = aGVsbG8= (with padding, 5 bytes) */
+	memset(buf, 'X', sizeof(buf));
+	len = read_base64("aGVsbG8=", buf, sizeof(buf));
+	ASSERT_INT_EQ(len, 5);
+	ASSERT(memcmp(buf, "hello", 5) == 0);
+	ASSERT_INT_EQ(buf[5], '\0');
+
+	return 1;
+}
+
+
 /*
  * Group 7: ldapvi-key extension
  */
@@ -1343,6 +1398,8 @@ void run_parseldif_tests(void)
 	TEST(base64_value);
 	TEST(base64_invalid);
 	TEST(base64_dn);
+	TEST(base64_dn_no_padding);
+	TEST(base64_nul_termination);
 
 	printf("\nGroup 7: ldapvi-key extension\n");
 	TEST(ldapvi_key_custom);

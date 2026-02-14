@@ -240,7 +240,7 @@ read_line1(FILE *s, GString *name, GString *value)
 			fputs("Error: Invalid Base64 string.\n", stderr);
 			return -1;
 		}
-		value->len = len;
+		g_string_truncate(value, len);
 	} else if (!strcmp(encoding, "<")) {
 		if (read_ldif_attrval(s, value) == -1) return -1;
 		if (strncmp(value->str, "file://", 7)) {
