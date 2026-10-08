@@ -1,5 +1,6 @@
 1.9 202y-mm-dd
    - Upcoming
+   - new -x option for LDAP Proxied Authorization (David 'equinox' Lamparter)
 
 1.8 2026-02-14
   - Preserve order of attribute values.
