@@ -33,6 +33,16 @@ Server.
 Search filter or DN: User to bind as.     [1]
 Sets \fB\-\-bind\fR simple.
 .TP
+\fB\-x\fR, \fB\-\-ldap-authzid\fR AZ
+Set authorization identity for LDAP Proxied Authorization (PAC). The option
+argument should be "dn:" followed by a DN, e.g.
+\fI-x dn:cn=admin,dc=example,dc=org\fR.  The corresponding OpenLDAP command
+line client option is \fI-e !authzid=dn:cn=admin,dc=example,dc=org\fR.
+.IP
+(This is completely separate from and has no relation to SASL and does not
+affect \fB\-\-bind\fR.  It may even be necessary to use \fB-x\fR and \fB-X\fR
+simultaneously.)
+.TP
 \fB\-w\fR, \fB\-\-password\fR SECRET
 Password (also valid for SASL).
 .TP

@@ -91,6 +91,7 @@ typedef struct bind_options {
         enum bind_dialog dialog;
         char *user;             /* DN or user search filter */
         char *password;         /* Simple or SASL passwd */
+        char *ldap_authzid;
         char *sasl_authcid;
         char *sasl_authzid;
         char *sasl_mech;

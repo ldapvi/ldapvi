@@ -757,7 +757,7 @@ do_connect(char *server, bind_options *bind_options,
  */
 static int
 save_ldif(tparser *parser, GArray *offsets, char *clean, char *data,
-	  char *server, char *user, int managedsait)
+	  char *server, char *user, int managedsait, const char *ldap_authzid)
 {
 	int fd;
 	FILE *s;
@@ -784,6 +784,8 @@ save_ldif(tparser *parser, GArray *offsets, char *clean, char *data,
 	fputs("#   ldapvi --ldapmodify", s);
 	if (managedsait)
 		fputs(" -M", s);
+	if (ldap_authzid)
+		fprintf(s, " -e \"!authzid=%s\"", ldap_authzid);
 	if (server) {
 		fputs(" -h ", s);
 		fputs(server, s);
@@ -1613,7 +1615,8 @@ main_loop(LDAP *ld, cmdline *cmdline,
 				      offsets, clean, data,
 				      cmdline->server,
 				      cmdline->bind_options.user,
-				      cmdline->managedsait))
+				      cmdline->managedsait,
+				      cmdline->bind_options.ldap_authzid))
 				break;
 			write_ldapvi_history();
 			return 0;

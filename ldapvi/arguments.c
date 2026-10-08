@@ -42,6 +42,7 @@ static void parse_configuration(char *, cmdline *, GPtrArray *);
 "  -h, --host URL         Server.\n"					      \
 "  -D, --user USER        Search filter or DN: User to bind as.     [1]\n"    \
 "                         Sets --bind simple.\n"                              \
+"  -x, --ldap-authzid AZ  LDAP proxy authentication identity.\n"	      \
 "  -w, --password SECRET  Password (also valid for SASL).\n"		      \
 "  -y, --password-file FILE  Password file (also valid for SASL).\n"	      \
 "      --bind [simple,sasl]\n"						      \
@@ -134,6 +135,7 @@ static struct poptOption options[] = {
 	{"sasl-mech",	'Y', POPT_ARG_STRING, 0, 'Y', 0, 0},
 	{"sasl-authzid",'X', POPT_ARG_STRING, 0, 'X', 0, 0},
 	{"sasl-authcid",'U', POPT_ARG_STRING, 0, 'U', 0, 0},
+	{"ldap-authzid",'x', POPT_ARG_STRING, 0, 'x', 0, 0},
 	{"password",	'w', POPT_ARG_STRING, 0, 'w', 0, 0},
 	{"password-file",'y',POPT_ARG_STRING, 0, 'y', 0, 0},
 	{"chase",	'C', POPT_ARG_STRING, 0, 'C', 0, 0},
@@ -504,6 +506,16 @@ parse_argument(int c, char *arg, cmdline *result, GPtrArray *ctrls)
 	case 'O':
 		result->bind_options.authmethod = LDAP_AUTH_SASL;
 		result->bind_options.sasl_secprops = arg;
+		break;
+	case 'x':
+		result->bind_options.ldap_authzid = arg;
+
+		control = malloc(sizeof(LDAPControl));
+		control->ldctl_oid = LDAP_CONTROL_PROXY_AUTHZ;
+		control->ldctl_iscritical = 1;
+		control->ldctl_value.bv_len = strlen(arg);
+		control->ldctl_value.bv_val = arg;
+		g_ptr_array_add(ctrls, control);
 		break;
 	case '!':
 		result->noninteractive = 1;
